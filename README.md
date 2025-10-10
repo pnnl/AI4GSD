@@ -57,14 +57,9 @@ Pacific Northwest National Laboratory, Richland, WA, USA
 ## License
 This code applies dual licensing:
 
-All *.py files within in ./AI4GSD folder:  Apache 2.0 license, see details in ./Licenses
-
-All *.csv files within in ./AIGSD/templates: Apache 2.0 license, see details in ./Licenses
-
-All *.pt files within in ./AIGSD/templates: Apache 2.0 license, see details in ./Licenses
-
-All *.csv files within in ./Scales: Apache 2.0 license, see details in ./Licenses
-
-All files in ./Demo_Data and ./Demo_JypyterNotebook: BSD license, see details in ./Licenses
-
-Files in ffmpeg, exiftool_linux, exiftool_windows in ./AI4GSD/exes are open-source software, following their own license.
+* All *.py files within in ./AI4GSD folder:  Apache 2.0 license, see details in ./Licenses
+* All *.csv files within in ./AIGSD/templates: Apache 2.0 license, see details in ./Licenses
+* All *.pt files within in ./AIGSD/templates: Apache 2.0 license, see details in ./Licenses
+* All *.csv files within in ./Scales: Apache 2.0 license, see details in ./Licenses
+* All files in ./Demo_Data and ./Demo_JypyterNotebook: BSD license, see details in ./Licenses
+* Files in ffmpeg, exiftool_linux, exiftool_windows in ./AI4GSD/exes are open-source software, following their own license.
