@@ -56,6 +56,7 @@ Pacific Northwest National Laboratory, Richland, WA, USA
 
 ## License
 This code applies dual licensing:
+
 All *.py files within in ./AI4GSD folder:  Apache 2.0 license, see details in ./Licenses
 
 All *.csv files within in ./AIGSD/templates: Apache 2.0 license, see details in ./Licenses
