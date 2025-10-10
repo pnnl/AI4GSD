@@ -50,9 +50,7 @@ year = {2025}
 }
 
 ## Developers
-Yunxiang Chen
-Pacific Northwest National Laboratory, Richland, WA, USA  
- \* : Intern students
+Yunxiang Chen (yunxiang.chen@pnn.gov), Pacific Northwest National Laboratory, Richland, WA, USA  
 
 ## License
 This code applies dual licensing:
