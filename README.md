@@ -45,7 +45,7 @@ The users can follow the description in each Jupyter Notebook to run the model s
 address = {Richland, WA, USA},
 author = {Chen, Yunxiang},
 title = {{AI4GSD: an easy-to-use grain size distribution measurement software powered by vision AI}},
-url = {https://github.com/pnnl/AI4GSD},
+url = {https://github.com/pnnl/AI4GSD },
 year = {2025}
 }
 
