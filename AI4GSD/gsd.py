@@ -20,7 +20,7 @@
 # limitations under the License.                                              #
 
 #%% Required package.
-import os, time, cv2, requests, copy, re, platform, fnmatch, matplotlib, glob, psutil
+import os, time, cv2, requests, copy, re, platform, fnmatch, matplotlib, glob
 import numpy as np
 import pandas as pd                                                         
 from PIL import Image
@@ -95,7 +95,7 @@ def Photo2GSDSingle(PP):
     gsdflag = PP.GSDFlag
     overlap_photo = PP.GrainBackgrouondOverlapThreshold              
     overlap_grain = PP.InvividualGrainBackgrouondOverlapThreshold
-    segalpha = PP.SegmentationOverlayTransparency                              # Transparency of segementation.
+    segalpha = float(PP.SegmentationOverlayTransparency)                       # Transparency of segementation.
     line_color1_rgb = PP.SaveOverlayGrainColor                     
     line_color2_rgb = PP.SaveOverlayScaleColor                    
     line_color3_rgb = PP.SaveOverlayBackgroundColor                      
@@ -523,6 +523,7 @@ def Photo2GSDSingle(PP):
                     if os.path.isfile(outMask) and usemask:
                         mask01 = cv2.imread(outMask, cv2.IMREAD_GRAYSCALE)
                         mask01 = (mask01 > 0).astype(np.uint8,copy=False)
+                        if mask01.ndim == 3: mask01 = mask01[:,:,0]
                         mask_int = cv2.integral(mask01)
                         boxes = np.array(obj_px, dtype=int)  
                         x0, y0, x1, y1 = boxes.T
@@ -694,6 +695,24 @@ def Photo2GSDSingle(PP):
                 else:
                     raise 'Invalid statistics output version'
                 
+                # Converting label data to dataframe.
+                cnames_individual = ['label_index','center_width_m',\
+                            'center_heigth_m','width_m','height_m','diagonal_m',\
+                                'area_m2', 'resolution_m_per_pixel','probability']        
+                labels_rr = pd.DataFrame(labels_r,columns=cnames_individual)
+                del labels_r
+                
+                # Interpolating grain size data to uniform grid if needed.
+                vtknames = [PP.SaveVTKName]
+                if PP.SaveVTK:
+                    nv = len(vtknames)
+                    layers = np.zeros((nv,sh,sw), dtype=np.float32)
+                    for nvi in range(nv):
+                        vals = labels_rr[vtknames[nvi]].to_numpy(dtype=float)
+                        for nrsi in range(nrs):
+                            x1, y1, x2, y2 = obj_px0[nrsi, :]
+                            layers[nvi, y1:y2, x1:x2] = vals[nrsi]
+                            
                 # Output 1: characterisitc grain size for photo i (csv).
                 gsd_i =  dx_i[cnames_save]
                 if PP.SaveStatisticsData:
@@ -701,12 +720,8 @@ def Photo2GSDSingle(PP):
                     
                 # Output 2: sizes of all individual grain sizes after thresholding (csv).
                 if PP.SaveObjectData:
-                    cnames_individual = ['label_index','center_width_m',\
-                                'center_heigth_m','width_m','height_m','diagonal_m',\
-                                    'area_m2', 'resolution_m_per_pixel','probability']        
-                    labels_rr = pd.DataFrame(labels_r,columns=cnames_individual)
                     labels_rr.to_csv(outLocalSizeName,index=False)
-                
+                    
                 #-------------------------------------------------------------#
                 # Output 3,4,5: locations and sizes of all detected objects before#
                 # and after thresholding (txt: 2 for before and 1 for after threshold).
@@ -732,11 +747,21 @@ def Photo2GSDSingle(PP):
                 useagg = False
                 imgi = None
                 dpi_overlay = PP.SaveOverlayResolution
+                dot_r = PP.SaveOverlayScaleDotSize
+                dot_c = PP.SaveOverlayScaleDotColor
                 if PP.SaveFigure and PP.SaveOverlayLabel and nrs>= 2:
                     if not fig_show:
                         useagg = True
                         matplotlib.use("Agg")
                     from matplotlib import pyplot as plt
+                    plt.rcParams.update({
+                        'font.family': 'serif',
+                        'font.serif': ['Times New Roman'],
+                        'mathtext.fontset': 'stix',
+                        'pdf.fonttype': 42,
+                        'svg.fonttype': 'none',
+                        'axes.unicode_minus': False,
+                    })
                     outFileName = SaveDir + os.sep + stem + '_'  + outkeyword + '_box.jpg'
                     imgi = Image.open(imgpath).convert('RGB')
                     imgi = np.array(imgi)                                      # Converting image to array format.
@@ -744,7 +769,7 @@ def Photo2GSDSingle(PP):
                     
                     # For sediment overlay.
                     # Color: green (0,255,0); blue (0,0,255); red (255,0,0); whilte (255,255,255)
-                    lc1_bgr = tuple(reversed(line_color1_rgb))         # Convert to bgr.
+                    lc1_bgr = tuple(reversed(line_color1_rgb))                 # Convert to bgr.
                     plt.figure(1)
                     for bbox in obj_px0:                                       # For sediments.
                         x1, y1, x2, y2 = bbox
@@ -762,6 +787,8 @@ def Photo2GSDSingle(PP):
                             x1, y1, x2, y2 = bbox
                             if scsource == 'line':
                                 cv2.line(imgi, (x1, y1), (x2, y2), lc2_bgr, llw+2)
+                                cv2.circle(imgi, (x1, y1), dot_r, dot_c, -1)
+                                cv2.circle(imgi, (x2, y2), dot_r, dot_c, -1)
                             else:
                                 cv2.rectangle(imgi, (x1, y1), (x2, y2), lc2_bgr, llw+2)
                                 if len(mask01)>0: mask01[y1:y2,x1:x2] = 0      # Removing scale from mask.
@@ -770,10 +797,8 @@ def Photo2GSDSingle(PP):
                     # Plotting overlay for segmented regions.
                     if len(mask01)>0:
                         lc3_bgr = tuple(reversed(line_color3_rgb))             # In bgr.
-                        imgi[mask01 == 1] = (
-                            (1-segalpha) * np.array(lc3_bgr, dtype=np.uint8)
-                            + segalpha * imgi[mask01 == 1]
-                            ).astype(np.uint8)
+                        imgi[mask01 ==1] = ((1-segalpha) * np.array(lc3_bgr, dtype=np.uint8) + 
+                                             segalpha * imgi[mask01 == 1] ).astype(np.uint8)
                         if not PP.SaveOverlayAll: del mask01
                                                 
                     plt.imshow(cv2.cvtColor(imgi, cv2.COLOR_BGR2RGB))
@@ -782,12 +807,20 @@ def Photo2GSDSingle(PP):
                     plt.savefig(outFileName, bbox_inches='tight',pad_inches=0, dpi=dpi_overlay)
                     plt.show() if fig_show else plt.close(1)
                     plt.close('all')
-                    if not PP.SaveOverlayAll: imgi = None
+                    imgi = None
             
                 if PP.SaveFigure and PP.SaveGSDCurve and nrs>= 2:
                     if not useagg and not fig_show: 
                         matplotlib.use("Agg")
                     from matplotlib import pyplot as plt
+                    plt.rcParams.update({
+                        'font.family': 'serif',
+                        'font.serif': ['Times New Roman'],
+                        'mathtext.fontset': 'stix',
+                        'pdf.fonttype': 42,
+                        'svg.fonttype': 'none',
+                        'axes.unicode_minus': False,
+                    })
                     dpi_gsd = PP.SaveGSDCurveResolution
                     
                     #% Grain size distribution: using width data.
@@ -844,6 +877,14 @@ def Photo2GSDSingle(PP):
                         matplotlib.use("Agg")
                     from matplotlib import pyplot as plt
                     import matplotlib.patheffects as pe
+                    plt.rcParams.update({
+                        'font.family': 'serif',
+                        'font.serif': ['Times New Roman'],
+                        'mathtext.fontset': 'stix',
+                        'pdf.fonttype': 42,
+                        'svg.fonttype': 'none',
+                        'axes.unicode_minus': False,
+                    })
                     swh = min(sw,sh)
                     conditions = [(swh <= 500),
                                   (swh <= 1000),
@@ -856,30 +897,32 @@ def Photo2GSDSingle(PP):
                                   (swh <= 4500)]
                     choices = [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5,5]
                     beta = np.select(conditions, choices, default=5.5)
-                    beta = 2
+                    beta = PP.OverlayFontSizeScaleFactor
                     
                     # User-specified visualization control.
                     slw = PP.OverlayFontLineWidth*beta
                     fz = PP.OverlayFontSize*beta
                     lfz = PP.OverlayLegendFontSize*beta
-                    #gsdlw = PP.OverlayGSDLineWidth*beta
-                    gsdlw = PP.OverlayGSDLineWidth
+                    gsdlw = PP.OverlayGSDLineWidth * beta
                     gsdticklw = PP.OverlayGSDTickLineWidth*beta
                     ms = PP.OverlayD50MarkerSize*beta
                     ml = PP.OverlayGSDTickMarkLength*beta
                     ftc = PP.OverlayFontColor
+                    fftc = PP.OverlayFontColorForeground
                     pad_inches = 0.01
                     
                     # Prepare data.
                     xc = [xcw, xch, xcr, xaw, xah, xar]
                     fc = [fcw, fch, fcr, faw, fah, far]
                     del fcw, xcw, faw, xaw, fch, xch, fah, xah, fcr, xcr, far, xar
-                    colors = ['brown','blue','black','orange','cyan','red','purple']
-                    ls = ['-','--',':','-.']
-                    #mk = ['+','d','s','p','v','x','^']
-                    keys = ['AI4GSD: ','Manual: ','Field: ']
-                    lgs = ['count-width','count-height','count-diagonal',
-                           'area-width','area-height','area-diagonal']
+                    colors = PP.OverlayGSDColor
+                    colorsm = PP.OverlayGSDManualColor
+                    colorsf = PP.OverlayGSDFieldColor
+                    ls = PP.OverlayGSDLineType
+                    keys = PP.OverlayGSDKey
+                    lgs = PP.OverlayGSDLegend
+                    dmin = PP.OverlayGSDMinSize
+                    dmax = PP.OverlayGSDMaxSize
                     
                     # Loading manual grain size label data if existed..
                     csvname = stem + '.txt'
@@ -934,7 +977,8 @@ def Photo2GSDSingle(PP):
                         ymin = min(ymin,f.min())
                         ymax = max(ymax,f.max())
                         del xci, fci
-                    xmin = 0; xmax0 = np.ceil(xmax)
+                    xmin = 0 if dmin is None else dmin 
+                    xmax0 = np.ceil(xmax) if dmax is None else dmax*100
                     ymin = 0; ymax0 = 100
                     
                     img_aspect = sw / sh
@@ -978,6 +1022,8 @@ def Photo2GSDSingle(PP):
                                 x1, y1, x2, y2 = bbox
                                 if scsource == 'line':
                                     cv2.line(imgi, (x1, y1), (x2, y2), lc2_bgr, llw+2)
+                                    cv2.circle(imgi, (x1, y1), dot_r, dot_c, -1)
+                                    cv2.circle(imgi, (x2, y2), dot_r, dot_c, -1)
                                 else:
                                     cv2.rectangle(imgi, (x1, y1), (x2, y2), lc2_bgr, llw+2)
                                     if len(mask01)>0: mask01[y1:y2,x1:x2] = 0  # Removing scale from mask.
@@ -987,10 +1033,8 @@ def Photo2GSDSingle(PP):
                     lc3_bgr = tuple(reversed(line_color3_rgb))                 # In bgr.
                     if PP.SaveOverlaySegmentation:
                         if len(mask01)>0:
-                            imgi[mask01 == 1] = (
-                                (1-segalpha) * np.array(lc3_bgr, dtype=np.uint8)
-                                + segalpha * imgi[mask01 == 1]
-                                ).astype(np.uint8)
+                            imgi[mask01 ==1] = ((1-segalpha) * np.array(lc3_bgr, dtype=np.uint8) + 
+                                                 segalpha * imgi[mask01 == 1] ).astype(np.uint8)
                             del mask01
                     ###########################################################
                     
@@ -1007,6 +1051,49 @@ def Photo2GSDSingle(PP):
                             ax.imshow(cv2.cvtColor(imgi, cv2.COLOR_BGR2RGB), 
                                       origin="upper",aspect="equal")
                             ax.axis("off")
+                            
+                    if PP.SaveVTK:
+                        usernames = [PP.SaveVTKNameShow]
+                        lid = 0                                               
+                        layer = layers[lid, :, :].copy()
+                        del layers
+                        layer[layer==0] =  np.nan
+                        layer = np.log2(layer*1000)
+                        vname = vtknames[lid]
+                        if usernames: vname = usernames[lid]                   # Using User-specified names.
+                        #vmin = np.floor(np.nanmin(layer))
+                        #vmax = np.ceil(np.nanmax(layer))
+                        vmin = np.nanmin(layer)
+                        vmax = np.nanmax(layer)
+                        #ratio = PP.SaveVTKRatio
+                        #swn, shn = int(sw*ratio), int(sh*ratio)
+                        #layer = cv2.resize(layer, (swn, shn), interpolation=cv2.INTER_AREA)
+                        if not PP.SaveOverlayGSD and PP.SaveOverlayImage:
+                            extent = [0, sw, sh, 0]
+                        else:
+                            extent = [xmin, xmax, ymin, ymax]
+                        im = ax.imshow(
+                            layer,
+                            extent=extent,
+                            origin="upper",
+                            cmap=PP.SaveVTKCmap,
+                            alpha=PP.SaveVTKAlpha,
+                            aspect="equal",
+                            interpolation='none',
+                            vmin=vmin,
+                            vmax=vmax
+                        )
+                        cbar = plt.colorbar(im, ax=ax, orientation='vertical', pad=0.005, fraction=0.02)
+                        ax_pos = ax.get_position()
+                        cbar.ax.set_position([
+                            ax_pos.x1 + 0.005,                                 # x-position (slightly to the right)
+                            ax_pos.y0,                                         # y-position (same bottom)
+                            0.02,                                              # colorbar width
+                            ax_pos.height                                      # same height as image
+                        ])
+                        #cbar.set_label(f"${vname}$", fontsize=PP.SaveVTKFontSize)
+                        cbar.set_label(f"$\\mathrm{{{vname}}}$", fontsize=PP.SaveVTKFontSize)
+                        del layer
                         
                     if PP.SaveOverlayGSD:
                         for i in idx:                                      
@@ -1037,7 +1124,7 @@ def Photo2GSDSingle(PP):
                                 
                                 # Plot gsd curve.
                                 ax.plot(x_sorted*sx, f_sorted*sy, 
-                                        linestyle=ls[1], lw=gsdlw, color=colors[i],label=labeli)
+                                        linestyle=ls[1], lw=gsdlw, color=colorsm[i],label=labeli)
                                 x0 = float(np.interp(50.0, f_sorted, x_sorted))
                                 ax.plot(x0*sx, 50.0*sy, "o", color='red', markersize=ms, 
                                         markeredgecolor="k",markeredgewidth=0.5)
@@ -1055,6 +1142,7 @@ def Photo2GSDSingle(PP):
                     
                     # linestyle for field data.
                     nff = min(len(colors),len(fieldfiles))
+                    lgsfu = PP.OverlayGSDLegendField
                     if nff>0 and PP.SaveOverlayField:
                         for k in range(nff):
                             fieldfile = fieldfiles[k]
@@ -1063,7 +1151,11 @@ def Photo2GSDSingle(PP):
                             axk = fieldname[1]
                             unitk = fieldname[2]
                             lgsf = ''
-                            if len(fieldname) > 3: lgsf = ', ' + ' '.join(fieldname[3:])
+                            if lgsfu is None:
+                                if len(fieldname) > 3: lgsf = ', ' + ' '.join(fieldname[3:])
+                            else:
+                                if k < len(lgsfu): lgsf = lgsfu[k] 
+                                
                             xfm = pd.read_csv(fieldfile)
                             ni = int(xfm['grain_number'].iloc[0])
                             cnames = xfm.columns
@@ -1074,55 +1166,66 @@ def Photo2GSDSingle(PP):
                                 if unit == 'cm' and unitk == 'pixels': sc = sc*resolution
                                 xfm[:,1] = xfm[:,1]*sc                         # Grain size.
                                 if axk == 'b' and ('w' in gax or 'h' in gax):
-                                    labeli = keys[2] + 'count-b' + lgsf + f' (n = {ni:,})'
+                                    if lgsfu is None:
+                                        labeli = keys[2] + 'count-b' + lgsf + f' (n = {ni:,})'
+                                    else:
+                                        labeli = keys[2] + lgsf + f' (n = {ni:,})'
                                     ax.plot(xfm[:,1]*sx, xfm[:,2]*sy,linestyle=ls[2],
-                                            lw=gsdlw,color=colors[k],label=labeli)
+                                            lw=gsdlw,color=colorsf[k],label=labeli)
                                     x1 = float(np.interp(50.0, xfm[:,2], xfm[:,1]))
                                     ax.plot(x1*sx, 50.0*sy, "o", color='red', 
                                             markersize=ms, markeredgecolor="b",markeredgewidth=0.3)
 
                                     if xfm.shape[1] == 4 and ('a' in gwt):
-                                        labeli = keys[2] + 'area-b' + lgsf + f' (n = {ni:,})'
+                                        if lgsfu is None:
+                                            labeli = keys[2] + 'area-b' + lgsf + f' (n = {ni:,})'
+                                        else:
+                                            labeli = keys[2] + lgsf + f' (n = {ni:,})'
                                         ax.plot(xfm[:,1]*sx, xfm[:,3]*sy,
                                                 marker='+', markersize=2,
                                                 markerfacecolor='white',
                                                 markeredgewidth=0.5,        
                                                 linestyle=ls[3], 
                                                 lw=gsdlw,
-                                                color=colors[k],label=labeli)   
+                                                color=colorsf[k],label=labeli)   
                                         x2 = float(np.interp(50.0, xfm[:,3], xfm[:,1]))
                                         ax.plot(x2*sx, 50.0*sy, "o", color='red', 
                                                 markersize=ms, markeredgecolor="b",markeredgewidth=0.3)
                                         
                     # Adjust the overal xlabel and ylabel.
                     if PP.SaveOverlayGSD or PP.SaveOverlayField:
+                        nx = PP.OverlayGSDXTickNumber
+                        ny = PP.OverlayGSDYTickNumber
                         ax.set_xlim(xmin, xmax)
                         ax.set_ylim(ymin, ymax)
-                        ax.set_yticks(np.arange(ymin, ymax + 1, 10))
+                        yticks = np.linspace(ymin, ymax, ny)          
+                        ax.set_yticks(yticks)
                         ax.tick_params(axis='x', labelsize=gsdticklw, length=ml)
                         ax.tick_params(axis='y', labelsize=gsdticklw, length=ml)
                         if sx != 1:
-                            xticks = np.linspace(0, xrn, 6)          
-                            xticklabels = np.linspace(0, xr, 6)    
+                            xticks = np.linspace(0, xrn, nx)          
+                            xticklabels = np.linspace(0, xr, nx)    
                             ax.set_xticks(xticks)
                             ax.set_xticklabels([f"{lab:.0f}" for lab in xticklabels])  
                         else:
-                            yticks = np.linspace(0, yrn, 11)          
+                            yticks = np.linspace(0, yrn, ny)          
                             yticklabels = np.linspace(0, yr, 11)    
                             ax.set_yticks(yticks)
                             ax.set_yticklabels([f"{lab:.0f}" for lab in yticklabels])  
                         
+                        fdistx = PP.OverlayFontBoundaryDistanceX
+                        fdisty = PP.OverlayFontBoundaryDistanceY
                         if PP.SaveOverlayShowFont:
                             ax.text((xmin + xmax) / 2.0,
-                                    ymin + 0.005 * (ymax - ymin),
+                                    ymin + fdistx * (ymax - ymin),
                                     f"Grain size ({unit})", ha="center", va="bottom",
                                     fontsize=fz, color=ftc,
-                                    path_effects=[pe.withStroke(linewidth=slw, foreground="black")])
-                            ax.text(xmin + 0.005 * (xmax - xmin),
+                                    path_effects=[pe.withStroke(linewidth=slw, foreground=fftc)])
+                            ax.text(xmin + fdisty * (xmax - xmin),
                                     (ymin + ymax) / 2.0,
                                     "Percent finer (%)", ha="left", va="center", rotation=90,
                                     fontsize=fz, color=ftc,
-                                    path_effects=[pe.withStroke(linewidth=slw, foreground="black")])
+                                    path_effects=[pe.withStroke(linewidth=slw, foreground=fftc)])
                         
                         fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
                         
@@ -1133,26 +1236,33 @@ def Photo2GSDSingle(PP):
                             ax.grid(True, which='major', linestyle='--', linewidth=0.5, alpha=0.7)
                         for spine in ax.spines.values(): spine.set_visible(showax)
                             
-                        #ax.legend(loc="best", fontsize=lfz, frameon=True, facecolor="white",framealpha=0.2)
                         if PP.SaveOverlayGSDLegend:
-                            ax.legend(loc="best",
-                                            fontsize=lfz,
-                                            frameon=True,                      # draw frame
-                                            fancybox=True,                     # rounded corners
-                                            shadow=True,                       # soft shadow
-                                            facecolor="white",                 # box fill
-                                            edgecolor="0.5",                   # border color (gray)
-                                            framealpha=0.85,                   # transparency
-                                            borderpad=0.5,                     # padding inside box
-                                            labelspacing=0.4,                  # vertical spacing between labels
-                                            handlelength=1.6,                  # line length in legend
-                                            handletextpad=0.6,                 # gap between handle and text
-                                        )                    
-                    
-                plt.gca().set_aspect('equal', adjustable='box')
-                plt.savefig(outFigOverlayGSD, dpi=dpi_overlay, bbox_inches="tight", pad_inches=pad_inches)
-                plt.show() if fig_show else plt.close(5)    
-                del imgi
+                            xshift =  PP.OverlayLegendShiftX
+                            yshift =  PP.OverlayLegendShiftY
+                            sf = None if (xshift is None or yshift is None) else (xshift, yshift)
+                            ax.legend(loc=PP.OverlayLegendLoc,
+                                      bbox_to_anchor=sf,
+                                      bbox_transform=ax.transAxes if sf else None,
+                                      fontsize=lfz,
+                                      frameon=PP.OverlayLegendFrame,           # draw frame
+                                      fancybox=True,                           # rounded corners
+                                      shadow=PP.OverlayLegendShadow,           # soft shadow
+                                      facecolor=PP.OverlayLegendFaceColor,
+                                      edgecolor=PP.OverlayLegendEdgeColor, 
+                                      framealpha=PP.OverlayLegendAlpha,        # transparency
+                                      borderpad=0.03,                          # padding inside box
+                                      labelspacing=0.05,                       # vertical spacing between labels
+                                      handlelength=1.4,                        # line length in legend
+                                      handleheight = 0.9,
+                                      handletextpad=0.1,                       # gap between handle and text
+                                      alignment=PP.OverlayLegendAlignment,
+                                      labelcolor=PP.OverlayLegendColor
+                                      )
+
+                    plt.gca().set_aspect('equal', adjustable='box')
+                    plt.savefig(outFigOverlayGSD, dpi=dpi_overlay, bbox_inches="tight", pad_inches=pad_inches)
+                    plt.show() if fig_show else plt.close(5)    
+                    del imgi
                     
                 # Printing information.
                 dt = time.time() - ts

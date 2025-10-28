@@ -20,7 +20,7 @@
 # limitations under the License.                                              #
 
 #%% Required package.
-import os, re, gzip, shutil, platform, tarfile, glob, math
+import os, re, gzip, shutil, platform, tarfile, glob, math, zipfile
 import numpy as np
 import pandas as pd
 from natsort import natsorted, natsort_keygen
@@ -307,9 +307,15 @@ def readEXIFVideo(video_path: str) -> dict:
     # Define path to exteral tool: exiftool.exe.
     system = platform.system().lower()
     if system == 'windows':
+        exif_name = "exiftool-13.40_32"
         exif_os = 'exiftool_windows' 
-        exif_path = os.path.dirname(mathm_path) + os.sep + \
-            'exes' + os.sep + exif_os + os.sep + 'exiftool.exe'
+        exif_folder = os.path.join(os.path.dirname(mathm_path), "exes", exif_os, exif_name)
+        exif_zip = exif_folder + ".zip"
+        exif_path = os.path.join(exif_folder, exif_name, r"exiftool(-k).exe")
+        if not os.path.isfile(exif_path):
+            with zipfile.ZipFile(exif_zip, 'r') as zip_ref:
+                zip_ref.extractall(exif_folder) 
+                
     else:
         exif_name = "Image-ExifTool-13.34"
         exif_os = 'exiftool_linux' 

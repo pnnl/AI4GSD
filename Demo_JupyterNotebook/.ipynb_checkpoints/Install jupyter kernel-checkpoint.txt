@@ -1,0 +1,19 @@
+When running the code in JupyterNoteBook and the code cannot find installed packages. It may be related to wrong kernel selection. This occurs when there are more than one environment in the anaconda. 
+To fix this, it is required to "Install ipykernel" in the correct user environment.
+
+For AI4GSD, do the following to install your (for example, sfa) kernel:
+pip install ipykernel
+python -m ipykernel install --user --name your_env_name --display-name "Python (your_env_name)"
+
+After the install of the sfa kernel, then you can start the Jupyter NoteBook and then select the desired kernel.
+
+How to run Jupyter for D: or other path
+Open Anaconda Prompt
+then type: 
+jupyter notebook --notebook-dir="D:"
+
+The default is in C:
+
+Difference: Code/MarkDown/Raw
+
+To copy: Ctrl C/Ctrl V

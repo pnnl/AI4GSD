@@ -106,6 +106,8 @@ class parameters:
         'SaveOverlayShowFont': True,
         'SaveOverlayGrainColor': (0,255,0),                                    # Color: green (0,255,0); blue (0,0,255); red (255,0,0); whilte (255,255,255)
         'SaveOverlayScaleColor': (255,0,0),                                    # Color: green (0,255,0); blue (0,0,255); red (255,0,0); whilte (255,255,255)
+        'SaveOverlayScaleDotSize': 12,
+        'SaveOverlayScaleDotColor': (255,0,0),
         'SaveOverlayBackgroundColor': (0,0,255),                               # Color: green (0,255,0); blue (0,0,255); red (255,0,0); whilte (255,255,255)
         'SegmentationOverlayTransparency': 0.5,
         'SaveYOLOData': True,
@@ -142,6 +144,8 @@ class parameters:
             'blue2': 0.0508,'red4': 0.1016,'yellow8': 0.2032,
             'blue8': 0.2032},
         'OverlayFontColor': 'white',
+        'OverlayFontColorForeground': 'black',
+        'OverlayFontSizeScaleFactor':2,
         'OverlayFontSize': 2,
         'OverlayLegendFontSize': 2,
         'OverlayGSDLineWidth': 1,
@@ -149,9 +153,40 @@ class parameters:
         'OverlayGSDTickMarkLength': 2,
         'OverlayD50MarkerSize': 1.5,
         'OverlayLableLineWidth': 4,                                            # Line width of grain label boxes.
-        'OverlayFontLineWidth': 1,
+        'OverlayFontLineWidth': 0.5,
+        'OverlayFontBoundaryDistanceX': 0.0075,                                # Distance between x labels and photo edge.
+        'OverlayFontBoundaryDistanceY': 0.0075,                                # Distance between y labels and photo edge.
+        'OverlayLegendAlpha': 0.85,
+        'OverlayLegendFrame': True,
+        'OverlayLegendShadow': False,                                          # Add 3D effect.    
+        'OverlayLegendColor': 'black',
+        'OverlayLegendFaceColor': 'white',
+        'OverlayLegendEdgeColor': 'none',
+        'OverlayLegendAlignment': 'left',
+        'OverlayGSDColor': ['brown','blue','black','orange','cyan','red','purple'],
+        'OverlayGSDManualColor': ['brown','blue','black','orange','cyan','red','purple'],
+        'OverlayGSDFieldColor': ['brown','blue','black','orange','cyan','red','purple'],
+        'OverlayGSDLineType': ['-','--',':','-.'],
+        'OverlayGSDKey': ['AI4GSD: ','Manual: ','Field: '],
+        'OverlayGSDLegend': ['count-width','count-height','count-diagonal',\
+                             'area-width','area-height','area-diagonal'],
+        'OverlayGSDLegendField': None,
+        'OverlayGSDMinSize':None,                                              # Minium grain size in GSD plot.
+        'OverlayGSDMaxSize':None,                                              # Maximum grain size in GSD plot.
+        'OverlayGSDXTickNumber':6,
+        'OverlayGSDYTickNumber':6,
+        'OverlayLegendLoc': 'best',
+        'OverlayLegendShiftX': None,
+        'OverlayLegendShiftY': None,
         'GSDWeight': 'a',                                                      # How to weight grain size: a (area) or c (count).
-        'GSDAxis': 'r'                                                         # How to define grain size: w (width), h (height), r (diagnoal).                                                
+        'GSDAxis': 'r',                                                        # How to define grain size: w (width), h (height), r (diagnoal).                            
+        'SaveVTK': False,
+        'SaveVTKRatio': 1,
+        'SaveVTKName': 'diagonal_m',
+        'SaveVTKNameShow': '\log_2(D_i^r) (mm)',
+        'SaveVTKCmap': 'plasma',
+        'SaveVTKAlpha': 0.5,
+        'SaveVTKFontSize': 12,        
         }
         
     # Define default parameters and overwrite vlaues if provided by users.
