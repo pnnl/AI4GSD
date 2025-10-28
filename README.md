@@ -22,8 +22,11 @@ The following libraries are used, other version of libraries may also work.
 * Python (3.11.13)
 * numpy (2.2.6)
 * pandas (2.3.1)
+* opencv-python (4.12.0)
+* matplotlib (3.10.6)
 * ultralytics (8.3.186)
-
+* torch (2.9.0+cpu or version fit your CPU/GPU)
+  
 Using different version of numpy and pandas as listed above may cause error.
 
 ## Setup system path
