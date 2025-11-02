@@ -25,7 +25,7 @@ import os, copy, time, platform, glob, fnmatch, cv2, piexif, shutil, requests,\
 from datetime import datetime, timedelta
 import pandas as pd
 import numpy as np
-from natsort import natsorted
+from natsort import natsorted, index_natsorted
 from pathlib import Path
 from PIL import Image, ImageOps
 from matplotlib import pyplot as plt
@@ -48,11 +48,13 @@ class parameters:
         'Directory': '',                                                       # Folder path of photos/vidoes.
         'FolderLevel': 'L1',                                                   # Metadata at single folder level.
         'MetadataUnique': False,                                               # Used for multi-folders, removing rows with indentical photo name.
-        'Scales': {'none':-1},                                                 # Default photo resolution (m/pixel).
+        'ScalesDefault': {'none':-1},                                          # Default photo resolution (m/pixel).
+        'Scales': None,                                                        # User defined scales if provied.
+        'TemplateVersion':'V3',                                                # Template version.
         'ScaleTemplateName': 'Scales_V3.csv',                                  # A template for photo scale definition.
+        'StatisticsTemplateName': 'Statistics_V3.csv',                         # A template for final output statistics data.
         'UserScaleFile':'',                                                    # User-provided scale file.
         'UserGPSFile':'',                                                      # User-provided GPS file.
-        'StatisticsTemplateName': 'Statistics_V3.csv',                         # A template for final output statistics data.
         'ConfidenceThresholdYOLO':0.25,                                        # Cut off confidence threshold by default in YOLO.
         'ConfidenceThresholdUser':0.35,                                        # Additional cut off confidence threshold by user.
         'YOLOIOU':0.45,                                                        # Default IOU by YOLO.
@@ -114,7 +116,7 @@ class parameters:
         'SaveYOLODataBeforeThresholdFolder': 'BeforeThreshold',
         'SaveObjectData': True,
         'SaveStatisticsData': True,
-        'SaveStatisticsVersion':'V3',
+        'SaveStatisticsVersion':'V1',
         'PrintOnScreen': True,
         'PrintImageSize': False,
         'TemplateFolderName': 'templates',
@@ -123,6 +125,7 @@ class parameters:
         'ValidationPlotKeyWord':'Validation',
         'UserYOLOFolder':'',
         'OverWriteScaleFile':True,
+        'OverWriteScaleRows': True,
         'OverWriteGSDFilePhoto':False,
         'OverWriteGSDFileFolder':False,
         'OverWriteGSDFileSummary':False,
@@ -186,7 +189,10 @@ class parameters:
         'SaveVTKNameShow': '\log_2(D_i^r) (mm)',
         'SaveVTKCmap': 'plasma',
         'SaveVTKAlpha': 0.5,
-        'SaveVTKFontSize': 12,        
+        'SaveVTKFontSize': 12,   
+        'CircularityPercentError':5,
+        'MinimumGrainNumber':100,
+        'MinimumDroneHeight':1.5                                               # Unit m.
         }
         
     # Define default parameters and overwrite vlaues if provided by users.
@@ -549,10 +555,11 @@ def metadataLevel1(PP):
                 v_names.append(namei)
                 v_stems.append(stemi)
                 v_exts.append(exti)
-        v_names = natsorted(v_names)
-        v_stems = natsorted(v_stems)
+        idx = index_natsorted(v_names)
+        v_names = np.array(v_names)[idx]
+        v_stems = np.array(v_stems)[idx]   
         nvids = len(v_names)
-
+        
         # All image file names.
         img_names = []; img_stems = []; img_exts = []
         for namei, stemi, exti, ispvi in zip(names, stems, exts, ispv):
@@ -561,8 +568,9 @@ def metadataLevel1(PP):
                 img_names.append(namei)
                 img_stems.append(stemi)
                 img_exts.append(exti)                
-        img_names = natsorted(img_names)
-        img_stems = natsorted(img_stems)
+        idx = index_natsorted(img_names)
+        img_names = np.array(img_names)[idx]
+        img_stems = np.array(img_stems)[idx]   
         npics = len(img_names)
         nvt = nvids + npics
         
@@ -2074,4 +2082,202 @@ def photoResize(inputdir,desiredsize=12_000_000,flag='resized', overwrite=False,
                 img_out.save(output_path, quality=100)
         count+= 1
         
+#%% Performing qualicty control of grain size data.
+def qualityControl(casedir,datatype='pv',videos=None,circularitypercenterror=5,
+                   minimumgrainnumber=100, minimumdroneheight=1.5,startindex=0,coeff=None, 
+                   writedata = True,threshold=0.35,
+                   version='V3',modelname='YOLO11m.1280.20250322'):
+    
+    # Output information format control.
+    fmt0  = '\nQuality control summary for %s:'
+    fmt1a  = '%d/%d: %s, time %3.1f s, area %3.1f m2, valid area %3.1f m2 (%3.1f%%), frame %d, valid frame %g (%3.1f%%)'
+    fmt1b  = '%d/%d: ***, grain number %d, number per image %3.1f; efficiency %3.1f m2/s, %3.1f grains/s'
+    fmt2a  = 'Videos: time %3.1f s, area %3.1f m2, valid area %3.1f m2 (%3.1f%%), frame %d, valid frame %d (%3.1f%%)'
+    fmt2b  = 'Videos: grain number %d, number per image %3.1f; efficinecy %3.1f m2/s, %3.1f grains/s'
+    fmt3a  = 'Photos: time %3.1f s, area %3.1f m2, valid area %3.1f m2 (%3.1f%%), frame %d, valid frame %d (%3.1f%%)'
+    fmt3b  = 'Photos: grain number %d, number per image %3.1f; efficiency %3.1f m2/s, %3.1f grains/s'
+    fmt4a  = 'All: time %3.1f s, area %3.1f m2, valid area %3.1f m2 (%3.1f%%), frame %d, valid frame %d (%3.1f%%)'
+    fmt4b  = 'All: grain number %d, number per image %3.1f; efficiency %3.1f m2/s, %3.1f grains/s'
+    fmt5  = 'No data passing quality control, skipping data writing.'
+    fmt6 = 65*'='
+    
+    # Local keywords.
+    vkey = 'Statistics'
+    #skey = 'Scales'
+    coeff0 = [-2.59e-5, 2.16e-3, 0.278, 0.0219]
+    coeffp = coeff if coeff is not None else coeff0
+    res0 = np.polyval(coeffp, minimumdroneheight)
+    
+    # Processing directory info.
+    if os.path.isfile(casedir):
+        stpath = casedir
+        stname =  os.path.basename(casedir)
+        casedir = os.path.dirname(casedir)
+        fname = os.path.basename(casedir)
+    else:
+        fname = os.path.basename(casedir)
+        stname = '_'.join([vkey,version,fname,modelname,str(int(threshold*100))]) + '.csv'
+        stpath = os.path.join(casedir,stname)
+    gsd = pd.read_csv(stpath,keep_default_na=False)                            # Loading pre-generated grain size data.
+    print(fmt0 %(fname))
+    
+    # Processing for video data.
+    vfolder = os.path.join(casedir,'videos')
+    nva = 22
+    stv = -9999*np.ones((0, nva))
+    stva = -9999*np.ones((1, nva))
+    gsdv = pd.DataFrame()
+    n00vs = 0
+    typeid = 0
+    if 'v' in datatype and os.path.isdir(vfolder):
+        if videos is None: 
+            videos, _, _, ispv = getFiles(vfolder)                             # Obtain video names if not provided.
+            videos = [v for v, p in zip(videos, ispv) if p == 1]
+        nv = len(videos)                                                       # Number of videos.
+        drs, g0vs, a0vs, a2vs, n0vs, n1vs, n2vs = [0] * 7
+        for i in range(nv):
+            vname = videos[i]
+            vpath = os.path.join(vfolder,str(videos[i]))
+            info = readEXIF(vpath)
+            wv = info['Width']
+            hv = info['Height']
+            dmv = wv*hv/1e6
+            fr = info['FrameRate']
+            drv = info['Duration']
+            vid = int(vname.split('.')[0].split('_')[1])
+            gsdi = gsd[gsd.Site_ID == vid]
+            n00v = gsdi.shape[0]
+            gsdi = gsdi[gsdi['L1L2_res_meter_per_pixel']>0]
+            n0v = gsdi.shape[0]
+            a0v = np.sum(gsdi['Area_m2'])
+            g0v = np.sum(gsdi['Grain_number_threshold'])
+            if 'DJI' in vname or '':
+                gsdi = gsdi[gsdi['L1L2_res_millimeter_per_pixel']>res0]
+            else:
+                gsdi = gsdi[abs(gsdi['Relative_error_percent'])<=circularitypercenterror]
+            n1v = gsdi.shape[0]
+            gsdi = gsdi[gsdi['Grain_number_threshold']>minimumgrainnumber]
+            gsdv = pd.concat([gsdv, gsdi], ignore_index=True)
+            n2v = gsdi.shape[0]
+            a2v = np.sum(gsdi['Area_m2'])
+            rav = a2v/a0v
+            rav, r0v, r1v, r2v =  a2v/a0v, n0v/n00v, n1v/n00v, n2v/n00v
+            eav, env = a0v/drv, g0v/drv                                        # Efficiency.
+            gnv = g0v/n0v                                                      # Grain number per frame.
+            sti = np.array([typeid,i+startindex,vid,fr,wv,hv,dmv, drv,g0v,a0v,a2v,rav, 
+                            n00v,n0v,n1v,n2v, r0v, r1v, r2v, eav,env,gnv])
+            drs+= drv
+            g0vs+= g0v
+            a0vs+= a0v
+            a2vs+= a2v
+            n00vs+= n00v
+            n0vs+= n0v
+            n1vs+= n1v
+            n2vs+= n2v
+            stv = np.vstack((stv, sti))
+            stva[0,4:7] =  stv[-1,4:7]
+            stva[0,8:] =  stv[-1,8:]
+            print(fmt1a %(i+1,nv,vname,drv,a0v,a2v,rav*100,n00v,n2v,r2v*100))
+            print(fmt1b %(i+1,nv,g0v,gnv,eav,env))
+        if nv>1:
+            stvf = -9999*np.ones((1, nva))
+            stvf[0,0] = typeid
+            stvf[0,3:7] = np.mean(stv[:,3:7],axis=0)
+            ravs, r0vs, r1vs, r2vs =  a2vs/a0vs, n0vs/n00vs, n1vs/n00vs, n2vs/n00vs
+            eavs, envs = a0vs/drs, g0vs/drs
+            gnvs = g0vs/n0vs
+            stvf[0,7:] = np.array([drs,g0vs,a0vs,a2vs,ravs, 
+                            n00vs,n0vs,n1vs,n2vs, r0vs, r1vs, r2vs, eavs,envs, gnvs])
+            stva = stvf
+            stv = np.vstack((stv,stvf))
+            print(fmt2a %(a0vs,drs,a2vs,ravs*100,n00vs,n2vs,r2vs*100))
+            print(fmt2b %(g0vs,gnvs,eavs,envs))
+            
+    # Processing for photo data.
+    stp =  -9999*np.ones((1, nva))
+    gsdp = pd.DataFrame()
+    n00p = 0
+    drp = 0
+    stp[0,0] = 1
+    if 'p' in datatype:
+        gsdi = gsd[gsd.Photo_indicator == 1]
+        if gsdi.shape[0]>0:
+            n00p = gsdi.shape[0]
+            gsdi = gsdi[gsdi['L1L2_res_meter_per_pixel']>0]                    # QC0.
+            n0p = gsdi.shape[0]
+            a0p = np.sum(gsdi['Area_m2'])
+            g0p = np.sum(gsdi['Grain_number_threshold'])
+            t = pd.to_datetime(gsdi["Date_PST"])
+            drp = (t.max() - t.min()).total_seconds()     
+            
+            w = np.mean(gsdi['Width_pixel'])
+            h = np.mean(gsdi['Height_pixel'])
+            dm = np.mean(gsdi['Width_pixel']*gsdi['Height_pixel'])/1e6 
+            mask = gsdi["Name"].str.contains("DJI", case=False, na=False)
+            gsdi1  = gsdi[mask]                                                # Drone photos.
+            gsdi2  = gsdi[~mask]                                               # None-drone photos.
+            gsdi1 = gsdi1[gsdi1['L1L2_res_millimeter_per_pixel']>res0]         # QC1: drone.
+            gsdi2 = gsdi2[abs(gsdi2['Relative_error_percent'])
+                          <=circularitypercenterror]                           # QC1: smartphone.
+            gsdi = pd.concat([gsdi1, gsdi2], ignore_index=True)
+            n1p = gsdi.shape[0]
+            gsdi = gsdi[gsdi['Grain_number_threshold']>minimumgrainnumber]     # QC2.
+            gsdp = gsdi
+            n2p = gsdi.shape[0]
+            a2p = np.sum(gsdi['Area_m2'])
+            rap = a2p/a0p
+            rap, r0p, r1p, r2p =  a2p/a0p, n0p/n00p, n1p/n00p, n2p/n00p
+            eap, enp = a0p/drp, g0p/drp
+            gnp = g0p / n0p
+            stp[0,[4,5,6]] = np.array([w,h,dm])
+            stp[0,7:] = np.array([drp,g0p,a0p,a2p,rap, n00p,n0p,n1p,n2p, r0p, r1p, r2p, eap,enp, gnp])
+            print(fmt3a %(a0p,drp,a2p,rap*100,n00p,n2p,r2p*100))
+            print(fmt3b %(g0p,gnp,eap,enp))
+            
+    # Final data.
+    gsdqc = pd.concat([gsdv, gsdp], ignore_index=True)
+    stqc = stv if drp == 0 else np.vstack((stv,stp))
+    if n00vs>0 and n00p>0:
+        stvp = -9999*np.ones((1, nva))
+        stvp[0,0] = 2
+        stvp[0,4:7] =  (stva[0,4:7]*n00vs + stp[0,4:7]*n00p)/(n00vs+n00p)
+        g0 = g0p + g0vs
+        a0 = a0p + a0vs
+        a2 = a2p + a2vs
+        n00 = n00p + n00vs
+        dr = drp + drs
+        n0 = n0p + n0vs
+        n1 = n1p + n1vs
+        n2 = n2p + n2vs
+        ra, r0, r1, r2 =  a2/a0, n0/n00, n1/n00, n2/n00
+        ea, en = a0/dr, g0/dr
+        gn = g0/n0
+        stvp[0,7:] = np.array([dr,g0, a0,a2,ra,n00,n0,n1,n2, r0, r1, r2, ea, en,gn])
+        print(fmt4a %(a0,dr,a2,ra*100,n00,n2,r2*100))
+        print(fmt4b %(g0,gn,ea,en))
+        stqc = np.vstack((stqc,stvp))
+    
+    # Converting data to dataframe.
+    cnames = ['Data_type','Video_ID','Video_name','Frame_rate_fps','Width_px','Height_px',
+              'Dimension_megapixel','Duration_s','Grain_number_qc0','Area_qc0_m2',
+              'Area_qc2_m2','Area_ratio_qc2','Total_frame','Frame_qc0','Frame_qc1',
+              'Frame_qc2','Frame_ratio_qc0','Frame_ratio_qc1','Frame_ratio_qc2',
+              'Efficiency_m2_per_second','Efficiency_grains_per_second','Grain_number_per_frame']
+    stqc = pd.DataFrame(stqc, columns=cnames)
+    stqc.insert(0, 'Folder', fname)
+    
+    # Output data.
+    if gsdqc.shape[0] == 0: print(fmt5)
+    
+    qkey1 = 'QC'
+    qkey2 = 'QCSummary'
+    if writedata and gsdqc.shape[0] > 0:
+        gsdqcpath = casedir + os.sep + qkey1 + stname
+        stqcpath =casedir+os.sep+qkey2+ '_' + '_'.join(stname.split('_')[1:])
+        gsdqc.to_csv(gsdqcpath, index=False)
+        stqc.to_csv(stqcpath, index=False)
+    print(fmt6)
+    
+    return gsdqc, stqc
+
 #%%

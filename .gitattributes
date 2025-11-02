@@ -1,1 +1,2 @@
-Demo_Data/20250521_YC_WakingPhoneRoadTest/videos/IMG_9683.MOV filter=lfs diff=lfs merge=lfs -text
+Demo_Data/20250521_YC_WalkSmartphoneRoadTest/videos/IMG_9683.MOV filter=lfs diff=lfs merge=lfs -text
+Demo_Data/20241130_YC_DroneFieldTest/videos/DJI_0113.MOV filter=lfs diff=lfs merge=lfs -text

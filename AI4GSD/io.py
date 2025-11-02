@@ -740,7 +740,7 @@ def readFile(workdir, filtername='', overwrite=False, writedata=False, by='',
             #df = df.drop_duplicates()                                          # Remove duplicated rows.
             if filtername and (filtername in df.columns):
                 df[filtername] = pd.to_numeric(df[filtername], errors="coerce")
-                df = df[df[filtername] > 0]
+                df = df[df[filtername] > 0]                                    # Keep only data whose value larger tha 0 for filtername.
                 
             # sort
             nkey = natsort_keygen()
@@ -810,7 +810,8 @@ def readFiles(workdir, filtername='', overwrite=False, writedata=False, by='',
     else:
         if os.path.getsize(outpath)>10: 
             df = pd.read_csv(outpath,keep_default_na=False)
-
+    print()
+    
     return df
 
 #%%

@@ -1,0 +1,2 @@
+Folder,Data_type,Video_ID,Video_name,Frame_rate_fps,Width_px,Height_px,Dimension_megapixel,Duration_s,Grain_number_qc0,Area_qc0_m2,Area_qc2_m2,Area_ratio_qc2,Total_frame,Frame_qc0,Frame_qc1,Frame_qc2,Frame_ratio_qc0,Frame_ratio_qc1,Frame_ratio_qc2,Efficiency_m2_per_second,Efficiency_grains_per_second,Grain_number_per_frame
+20250521_YC_WalkSmartphoneRoadTest,0.0,0.0,9683.0,59.9585730724971,1080.0,1920.0,2.0736,36.2083333333333,1840.0,3.0440097124330734,2.229944474149395,0.7325681206079343,4.0,4.0,4.0,3.0,1.0,1.0,0.75,0.08406931311667874,50.817031070195675,460.0

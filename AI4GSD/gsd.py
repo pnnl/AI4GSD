@@ -71,7 +71,8 @@ def Photo2GSDSingle(PP):
     obj_name = PP.ObjectName
     SCName = PP.ScaleTemplateName
     GSDName = PP.StatisticsTemplateName
-    scales = PP.Scales
+    scales_d = PP.ScalesDefault
+    scales_u = PP.Scales
     pext = PP.TargetPhotoExtension
     exludes = PP.ExcludingPhotos
     outkeyword = PP.OutputKeyWord
@@ -191,9 +192,10 @@ def Photo2GSDSingle(PP):
         scales_user = scales_user.dropna(how='all')
         
     # Converting the use input scales into a dataFrame with 49 columns.
+    scales_u = scales_d if scales_u is None else {**scales_d, **scales_u}
     cnames2 = ["Name", "L1L2_res_meter_per_pixel"]
     cnames47 = list(set(cnames) - set(cnames2))
-    scales_input = pd.DataFrame(list(scales.items()), columns=cnames2)
+    scales_input = pd.DataFrame(list(scales_u.items()), columns=cnames2)
     idt = cnames.index('Date_PST')
     scales_input[cnames[idt:idt+1]] = refdate
     scales_input[cnames[idt+2:]] = 'N/A'  
@@ -203,14 +205,19 @@ def Photo2GSDSingle(PP):
                     set(cnames[idt+2:]) - set(['Folder','Scale_source']))
     scales_input[cnames39] = zmax
     scales_input = scales_input[cnames]
-    scales_input['L1L2_res_meter_per_pixel'] = -1                              # Set default resolution as -1 m/pixel.
-    scales_input['L1L2_res_millimeter_per_pixel'] = -1
+    mask = scales_input["L1L2_res_meter_per_pixel"] > 0
+    scales_input.loc[mask, "L1L2_res_millimeter_per_pixel"] = \
+    scales_input.loc[mask, 'L1L2_res_meter_per_pixel'] * 1000
+    scales_input.loc[~mask,'L1L2_res_meter_per_pixel'] = -1                    # Set default resolution as -1 m/pixel.
+    scales_input.loc[~mask,'L1L2_res_millimeter_per_pixel'] = -1
  
     # Merging user input scales and metadata scales into a combined one.
     scales_all = scales_input if len(scales_user) == 0 else \
         pd.concat([scales_input, scales_user], axis=0, ignore_index=True)
     
     # Removing rows with non-positive resolution and removing repeated rows.
+    scales_all_copy = scales_all.copy()
+    scales_all_copy = scales_all_copy.drop_duplicates(subset='Name', keep='first')
     scales_all = scales_all[scales_all['L1L2_res_meter_per_pixel']>=0]
     scales_all = scales_all.drop_duplicates(subset='Name', keep='first')
     scales_names = scales_all[cnames2[0]].values
@@ -269,7 +276,7 @@ def Photo2GSDSingle(PP):
         # First write of the data.
         first_write = True
         if PP.SaveStatisticsData: open(outGSDName, "w").close()
-        #files = files[0:1]
+        #files = files[1:2]
         for i in range(len(files)):
             ts = time.time()
             # Get photo name, parent name, and extension.                     #
@@ -338,7 +345,7 @@ def Photo2GSDSingle(PP):
                         resolution = scales_all[cnames2[1]].values[idx]        # Using all resolution if resolution not defined.
                         notes = 'none'
                     else:
-                        resolution = PP.Scales['none']                         # Using default resolution if resolution not provided.
+                        resolution = scales_u['none']                          # Using default resolution if resolution not provided.
                         notes = 'default'
                         
                 # Access model, conduct predictions and post processing.
@@ -500,6 +507,7 @@ def Photo2GSDSingle(PP):
                 # Further calculation of other information based on xywh and p.
                 pp00, pp0, pps = [zmax]*3
                 nrn, nrs = [0]*2
+                labels_r = None
                 if nra>0:
                     pp00 = np.mean(obj_score)*100                              # Average accuracy before segementation.
                     nrn = len(obj_score)
@@ -579,7 +587,7 @@ def Photo2GSDSingle(PP):
                             keys = "_".join(['D'+str(val),size_method,weight_method,'meter'])
                             cnames_m.append(keys)
                 
-                # Output variable names part 2.
+                # Output variable names part 2: Mean_size_count_meter to Area_m2.
                 idm1 = cnames_gsd.index('Mean_size_count_meter')
                 idm2 = cnames_gsd.index('Area_m2')
                 nv = idm2 - idm1 + 1
@@ -639,8 +647,18 @@ def Photo2GSDSingle(PP):
 
                 # Final output information.
                 dx_merge = pd.DataFrame([dx_merge], columns=cnames_merge)
-                scales_i = headers_sc if notes == 'default' \
-                    else scales_all.iloc[[idx], :].reset_index(drop=True)
+                if notes == 'default':
+                    scales_i = headers_sc.copy()
+                    if fname in scales_all_copy["Name"].values:
+                        #cnames_i = ["Make", "Model","Author","Keyword","Site_ID",
+                        #            'Date_PST','Date_Second']
+                        cnames_i = scales_all_copy.columns
+                        matched = scales_all_copy.loc[
+                            scales_all_copy["Name"] == fname, cnames_i
+                        ].reset_index(drop=True)
+                        scales_i.loc[0, cnames_i] = matched.loc[0, cnames_i]
+                else:
+                    scales_i = scales_all.iloc[[idx], :].reset_index(drop=True)
                 dx_merge.index = scales_i.index
                 dx_i = pd.concat([scales_i,dx_merge], axis=1)
                 dx_i.loc[0, 'Name'] = fname
@@ -652,7 +670,7 @@ def Photo2GSDSingle(PP):
                 dx_i.loc[0, 'Scale_x_meter'] = sw * abs(resolution)
                 dx_i.loc[0, 'Scale_y_meter'] = sh * abs(resolution)
                 dx_i.loc[0, 'Notes'] = notes
-                dx_i.loc[0, 'Folder'] = os.path.basename(SaveDir)
+                dx_i.loc[0, 'Folder'] = foldername
                 dx_i.loc[0, 'Grain_number_raw'] = nra
                 dx_i.loc[0, 'Grain_number_segmentation'] = nrn
                 dx_i.loc[0, 'Grain_number_threshold'] = nrs
@@ -661,7 +679,8 @@ def Photo2GSDSingle(PP):
                 dx_i.loc[0, 'Accuracy_threshold_percent'] = pps
                 dx_i.loc[0, 'Threshold_percent'] = conf1 * 100.0
                 dx_i.loc[0, 'Area_m2'] = sw * sh * (resolution ** 2)
-                dx_i.insert(2, 'Model_ID', model_name)
+                dx_i.insert(2, 'Save_folder', os.path.basename(SaveDir))
+                dx_i.insert(3, 'Model_ID', model_name)
                 
                 dtype_map = {
                     'Width_pixel':'int32','Height_pixel':'int32',
@@ -683,14 +702,16 @@ def Photo2GSDSingle(PP):
                     idx3a = cnames_f.index('Make')
                     idx3b = cnames_f.index('Notes')
                     cnames_save = cnames_f[0:idx3a] + cnames_f[idx3b+1:] + cnames_f[idx3a:idx3b+1]
+                    
                 elif PP.SaveStatisticsVersion.lower() == 'v3':
                     idx4a = cnames_f.index('D10_x_count_meter')
                     idx4b = cnames_f.index('Area_ratio_percent')
                     idx5a = cnames_f.index('Area_ratio_below_2mm_percent')
                     idx5b = cnames_f.index('Area_m2')
-                    cnames_basics = ['Name','Folder','Scale_source','Model_ID','Width_pixel','Height_pixel',
+                    cnames_basics = ['Name','Folder','Save_folder','Scale_source','Model_ID','Width_pixel','Height_pixel',
                                       'L1L2_res_meter_per_pixel','L1L2_res_millimeter_per_pixel',
-                                      'Scale_x_meter','Scale_y_meter','Relative_error_percent']
+                                      'Scale_x_meter','Scale_y_meter','Relative_error_percent',
+                                      'Photo_indicator']
                     cnames_save = cnames_basics + cnames_f[idx4a:idx4b+1] + cnames_f[idx5a:idx5b+1]
                 else:
                     raise 'Invalid statistics output version'
@@ -699,12 +720,12 @@ def Photo2GSDSingle(PP):
                 cnames_individual = ['label_index','center_width_m',\
                             'center_heigth_m','width_m','height_m','diagonal_m',\
                                 'area_m2', 'resolution_m_per_pixel','probability']        
-                labels_rr = pd.DataFrame(labels_r,columns=cnames_individual)
-                del labels_r
-                
+                if labels_r is not None:
+                    labels_rr = pd.DataFrame(labels_r,columns=cnames_individual)
+                    
                 # Interpolating grain size data to uniform grid if needed.
                 vtknames = [PP.SaveVTKName]
-                if PP.SaveVTK:
+                if PP.SaveVTK and labels_r is not None:
                     nv = len(vtknames)
                     layers = np.zeros((nv,sh,sw), dtype=np.float32)
                     for nvi in range(nv):
@@ -719,7 +740,7 @@ def Photo2GSDSingle(PP):
                     gsd_i.to_csv(outLocalGSDName,index=False)
                     
                 # Output 2: sizes of all individual grain sizes after thresholding (csv).
-                if PP.SaveObjectData:
+                if PP.SaveObjectData and labels_r is not None:
                     labels_rr.to_csv(outLocalSizeName,index=False)
                     
                 #-------------------------------------------------------------#
@@ -1209,7 +1230,7 @@ def Photo2GSDSingle(PP):
                             ax.set_xticklabels([f"{lab:.0f}" for lab in xticklabels])  
                         else:
                             yticks = np.linspace(0, yrn, ny)          
-                            yticklabels = np.linspace(0, yr, 11)    
+                            yticklabels = np.linspace(0, yr, ny)    
                             ax.set_yticks(yticks)
                             ax.set_yticklabels([f"{lab:.0f}" for lab in yticklabels])  
                         
