@@ -1,0 +1,15 @@
+The image and data are from BASEGRAIN: https://basement.ethz.ch/download/tools/basegrain.html
+
+The following steps are used to obtain the image and field data
+*Download BASEGRAIN2p3_Installer.exe from https://basement.ethz.ch/download/tools/basegrain.html
+*Install it
+*Open BASEGRAIN2p3
+*Change image file to :  C:\Program Files\BASEGRAIN2p3\application\BASEGRAIN2p3georef1775x1989.jpg
+*Input scale(mm/px): 0.56
+*Click A
+*Click: Results analysis
+*Click: fig060p14
+
+Please cite the following references if reusing the data:
+BASEGRAIN: https://basement.ethz.ch/download/tools/basegrain.html
+Detert, M., & Weitbrecht, V. (2012). Automatic object detection to analyze the geometry of gravel grains - A free stand-alone tool. In River Flow 2012 - Proceedings of the International Conference on Fluvial Hydraulics (pp. 595–600). Taylor and Francis.

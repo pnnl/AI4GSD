@@ -2190,14 +2190,15 @@ def qualityControl(casedir,datatype='pv',videos=None,circularitypercenterror=5,
                             n00vs,n0vs,n1vs,n2vs, r0vs, r1vs, r2vs, eavs,envs, gnvs])
             stva = stvf
             stv = np.vstack((stv,stvf))
-            print(fmt2a %(a0vs,drs,a2vs,ravs*100,n00vs,n2vs,r2vs*100))
+            print(fmt2a %(drs,a0vs,a2vs,ravs*100,n00vs,n2vs,r2vs*100))
             print(fmt2b %(g0vs,gnvs,eavs,envs))
             
     # Processing for photo data.
     stp =  -9999*np.ones((1, nva))
     gsdp = pd.DataFrame()
     n00p = 0
-    drp = 0
+    eps = 0
+    drp = eps
     stp[0,0] = 1
     if 'p' in datatype:
         gsdi = gsd[gsd.Photo_indicator == 1]
@@ -2231,12 +2232,12 @@ def qualityControl(casedir,datatype='pv',videos=None,circularitypercenterror=5,
             gnp = g0p / n0p
             stp[0,[4,5,6]] = np.array([w,h,dm])
             stp[0,7:] = np.array([drp,g0p,a0p,a2p,rap, n00p,n0p,n1p,n2p, r0p, r1p, r2p, eap,enp, gnp])
-            print(fmt3a %(a0p,drp,a2p,rap*100,n00p,n2p,r2p*100))
+            print(fmt3a %(drp,a0p,a2p,rap*100,n00p,n2p,r2p*100))
             print(fmt3b %(g0p,gnp,eap,enp))
             
     # Final data.
     gsdqc = pd.concat([gsdv, gsdp], ignore_index=True)
-    stqc = stv if drp == 0 else np.vstack((stv,stp))
+    stqc = stv if drp == eps else np.vstack((stv,stp))
     if n00vs>0 and n00p>0:
         stvp = -9999*np.ones((1, nva))
         stvp[0,0] = 2
@@ -2253,7 +2254,7 @@ def qualityControl(casedir,datatype='pv',videos=None,circularitypercenterror=5,
         ea, en = a0/dr, g0/dr
         gn = g0/n0
         stvp[0,7:] = np.array([dr,g0, a0,a2,ra,n00,n0,n1,n2, r0, r1, r2, ea, en,gn])
-        print(fmt4a %(a0,dr,a2,ra*100,n00,n2,r2*100))
+        print(fmt4a %(dr,a0,a2,ra*100,n00,n2,r2*100))
         print(fmt4b %(g0,gn,ea,en))
         stqc = np.vstack((stqc,stvp))
     

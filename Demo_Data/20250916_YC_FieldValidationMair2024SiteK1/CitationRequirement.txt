@@ -1,0 +1,5 @@
+The image and data are from Mair David. (2023). Dataset and model weights for ImageGrains (Version v1) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.8005771
+
+Please cite the following references if reusing the data:
+Mair David. (2023). Dataset and model weights for ImageGrains (Version v1) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.8005771
+Mair, D., Witz, G., Do Prado, A. H., Garefalakis, P., & Schlunegger, F. (2024). Automated detecting, segmenting and measuring of grains in images of fluvial sediments: The potential for large and precise data from specialist deep learning models and transfer learning. Earth Surface Processes and Landforms, 49(3), 1099–1116. https://doi.org/10.1002/esp.5755
