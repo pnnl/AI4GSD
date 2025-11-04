@@ -39,8 +39,8 @@ All the codes for the models are in folder AI4GSD. Six Jupyter Notebooks (in Dem
 * Demo2_Smartphone_Photos.ipynb : a demo to show how to process photos from smartphones.
 * Demo3_Smartphone_Videos.ipynb : a demo to show how to process video data from smartphones.
 * Demo4_Smartphone_PhotosAndVideos.ipynb : a demo to show how to process both photos and videos from smartphone.
-* Demo5_FieldValidation_BaseGrainExample : a demo to validate the accuracy of the AI model against BaseGrain tutorial example.
-* Demo6_FieldValidation_Mair2024SiteK1.ipynb : a demo to validate the accuracy of the AI model against Site K1 field data from Mair D. 2024.
+* Demo5_FieldValidation_BaseGrainExample : a demo to validate the AI model against BaseGrain tutorial example.
+* Demo6_FieldValidation_Mair2024SiteK1.ipynb : a demo to validate the AI model against Site K1 field data from Mair D. 2024.
 
 The users can follow the description in each Jupyter Notebook to run the model step by step.
 
