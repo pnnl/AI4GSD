@@ -160,7 +160,7 @@ def readSRT(VPath, FCPath = ''):
     return F, data
 
 #%% Extracting the EXIF information of a photo.
-def readEXIFPhoto(img_path: str) -> dict:
+def readEXIFPhoto(img_path: str, zmax=-9999) -> dict:
     
     # Make sure file extension is case insensitive.
     dirname, ext = os.path.splitext(img_path)
@@ -169,8 +169,8 @@ def readEXIFPhoto(img_path: str) -> dict:
         img_path = dirname + ext.upper()
         
     # Default values.
-    info = {'Width': 0, 'Height': 0, 'Orientation': 1, 'FrameRate': 0, \
-            'Duration': 0, 'Make': 'N/A','Model': 'N/A','DateTime': None,\
+    info = {'Width': zmax, 'Height': zmax, 'Orientation': 1, 'FrameRate': zmax, \
+            'Duration': zmax, 'Make': 'N/A','Model': 'N/A','DateTime': None,\
             'GPSInfo': None}
     
     # Updating values if img_path existed.
@@ -293,7 +293,7 @@ def readEXIFPhoto(img_path: str) -> dict:
     return info
 
 #%% Extracting the EXIF information of a video.
-def readEXIFVideo(video_path: str) -> dict:
+def readEXIFVideo(video_path: str, zmax=-9999) -> dict:
     """
     Extract “EXIF”-style metadata from a video file using ExifToolHelper.
     Returns a dict with keys:
@@ -338,8 +338,8 @@ def readEXIFVideo(video_path: str) -> dict:
             # Make sure the binary is executable
             os.chmod(exif_path, os.stat(exif_path).st_mode | 0o111)
 
-    info = {'Width': 0, 'Height': 0, 'Orientation': 1, 'FrameRate': 0, \
-            'Duration': 0, 'Make': 'N/A','Model': 'N/A','DateTime': None,\
+    info = {'Width': zmax, 'Height': zmax, 'Orientation': 1, 'FrameRate': zmax, \
+            'Duration': zmax, 'Make': 'N/A','Model': 'N/A','DateTime': None,\
             'GPSInfo': None}
         
     if os.path.isfile(video_path) and os.path.isfile(exif_path):
@@ -397,7 +397,7 @@ def readEXIFVideo(video_path: str) -> dict:
     return info
 
 #%% Extracting the EXIF information of a photo or video.
-def readEXIF(filename: str) -> dict:
+def readEXIF(filename: str, zmax=-9999) -> dict:
     photo_ext = {".jpg", ".jpeg", ".png", ".tiff", ".bmp", ".gif"}
     video_ext = {".mp4", ".avi", ".mov", ".mkv", ".wmv", ".flv", ".mpeg", ".mpg"}
     #filename = Path(filename)
@@ -408,8 +408,8 @@ def readEXIF(filename: str) -> dict:
     elif ext in video_ext:
         info = readEXIFVideo(filename)
     else:
-        info = {'Width': 0, 'Height': 0, 'Orientation': 1, 'FrameRate': 0,
-                'Duration': 0, 'Make': 'N/A','Model': 'N/A','DateTime': None,
+        info = {'Width': zmax, 'Height': zmax, 'Orientation': 1, 'FrameRate': zmax,
+                'Duration': zmax, 'Make': 'N/A','Model': 'N/A','DateTime': None,
                 'GPSInfo': None}
     return info
 
@@ -799,7 +799,8 @@ def readFiles(workdir, filtername='', overwrite=False, writedata=False, by='',
                 ascending=ascending,
                 keyword=keyword,
                 version=version)
-            df = pd.concat([df, dfi], ignore_index=True)
+            if not dfi.empty: 
+                df = pd.concat([df, dfi], ignore_index=True)
             del dfi
         df = df.drop_duplicates()                                              # Remove duplicated rows.
         

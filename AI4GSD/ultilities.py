@@ -33,7 +33,7 @@ from matplotlib import pyplot as plt
 # Loading AI4GSD functions.
 from .mathm import __file__ as mathm_path
 from .mathm import getFiles, datevec, interp1, etime, center2corners, \
-    ismembertol, getFolders, isfile
+    ismembertol, getFolders, isfile, gpsdist
 from .converters import yolo2mask, yolo2txt, yolo2json
 from .io import readEXIF, readFC, readSRT, getExif
 
@@ -59,7 +59,7 @@ class parameters:
         'ConfidenceThresholdUser':0.35,                                        # Additional cut off confidence threshold by user.
         'YOLOIOU':0.45,                                                        # Default IOU by YOLO.
         'TargetPhotoExtension': ['.jpg','.png','.jpeg','.tif','.tiff'],        # What photo data to process.
-        'TargetVideoExtension': ['.mp4','.mov','.avi','.srt'],                 # What video data to process.
+        'TargetVideoExtension': ['.mp4','.mov','.avi'],                        # What video data to process.
         'ExcludingPhotos':[''],                                                # What photos to exlude.
         'ModelName':'YOLO11m.1280.20250926',                                   # Nickname of AI model.
         'LandingAIInferenceMethod':'Python',                                   # Method to call LandingAI models.
@@ -192,7 +192,12 @@ class parameters:
         'SaveVTKFontSize': 12,   
         'CircularityPercentError':5,
         'MinimumGrainNumber':100,
-        'MinimumDroneHeight':1.5                                               # Unit m.
+        'MinimumDroneHeight':1.5,                                              # Unit m.
+        'Usage':3,                                                             # Data usage: 0 train, 1 val, 2 test, 3 predict.
+        'SiteID': 'N/A',
+        'Author': 'YC',
+        'ZeroReplacedBy':'Z',
+        'VideoTimeMode':'first',                                               # Which time to use as video metadata time (first or last).
         }
         
     # Define default parameters and overwrite vlaues if provided by users.
@@ -427,16 +432,24 @@ def agent(PP):
         
     return cloud_name, api_key, model_id
 
-#%% Extracting the metadata of L1 folder which contains both photos and videos.
-# Latest version: 20250901.  
+#%% Extracting metadata of L1 folder which contains both photos and videos.   #
+# Notes on drone videoes, photoes, and video-derivied images: 1) Time and GPS #
+# in metadata are most accurate when both flight logs and video SRT data are  #
+# available; 2) If both flight record and SRT are available, the video time is#
+# the time of frame 1 in SRT minus 1/frame rate (estimated time for frame 0); #
+# 3) For drone video-drived images, the resutls are from 4 mode: 3a) with both#
+# logs and srt; 3b) with logs but no srt; 3c) no logs but with srt;3d) no logs#
+#, no srt. 3a is most accurate; 3b == 3d; 3c is less accurate due to missing  #
+# logs. 4) For smartphone video images:  no srts, no logs, equivalent to 3d.  #
 def metadataLevel1(PP):
-
-    t0 = time.time()
+    
+    #t0 = time.time()
     # Print information control.
     formatSpec1 = '%s/%s: video %s/%s, %s (%3.2f%%), %3.2f s'
     formatSpec2 = '%s/%s: photo %s/%s, %s, scale %s, res %3.2f mm/px, status %s, (%3.2f%%), %3.2f s'
     formatSpec2a = '%s/%s: photo %s/%s, %s, scale %s, res %d px/px, status %s, (%3.2f%%), %3.2f s'
     formatSpec2b = 'Model layer: %s, model parmeter: %4.2fM, submodule number: %s'
+    formatSpec2c = 'IOU: %3.2f, user confidence: %3.2f'
     #formatSpec3 = 'Total time %3.2f s, time per data %.2f s'
     #formatSpec4= 'Total time %3.2f s'
     
@@ -444,6 +457,7 @@ def metadataLevel1(PP):
     if PP.Directory == '': raise ValueError('Working directory is not defined.')
     
     # Pass parameters from PP to local.
+    PP.ObjectName = 'cap'
     DirectoryL1 = PP.Directory
     SCUserFile= PP.UserScaleFile
     #GPSFile= PP.UserGPSFile
@@ -462,13 +476,14 @@ def metadataLevel1(PP):
     validationkeyword = PP.ValidationPlotKeyWord
     model_name = PP.ModelName
     scalefactor = PP.ImageSizeFactor                                           # Used to control image size for inference.
-    PP.ObjectName = 'cap'
     sc = PP.AIScale                                                            # Default sizes of reference scales.
     poly = np.poly1d(PP.DroneResolutionFormula)                                # The calibrated resolution formula of drone.
     scflag = PP.ScaleFlag
-    #poly = np.poly1d(cc)                                                       # Converting coeffients to polynomial.
     pr = PP.FloatPrecision
-    
+    iou = PP.YOLOIOU
+    conf1 = PP.ConfidenceThresholdUser
+    stid = PP.SiteID
+    zeroby = PP.ZeroReplacedBy
     tdir = PP.TemplateFolderName
     vdir = PP.VideoFolderName
     pdir = PP.PhotoFolderName
@@ -477,9 +492,10 @@ def metadataLevel1(PP):
     sdir = PP.ScaleAIPredictionSaveFolderName
     
     # Defining cloud information.
-    cloud_models=['RepPoints37M','YOLO11m.1280.20250127','YOLO11x.1280','YOLO11m.640',
-                  'YOLOv5x6u.1280','YOLO11m.1280.20250307','YOLO11m.640.20250307',
-                  'YOLO11m.1280.20250308','YOLO11m.640.20250309','YOLO11m.1280.20250309',
+    cloud_models=['RepPoints37M','YOLO11m.1280.20250127','YOLO11x.1280',
+                  'YOLO11m.640','YOLOv5x6u.1280','YOLO11m.1280.20250307',
+                  'YOLO11m.640.20250307','YOLO11m.1280.20250308',
+                  'YOLO11m.640.20250309','YOLO11m.1280.20250309',
                   'YOLO11m.1280.20250319','YOLO11m.1280.20250320',
                   'YOLO11x.1280.20250320','YOLO11m.1280.20250321',
                   'YOLO11m.1280.20250322','YOLO11m.1280.20250518',
@@ -496,11 +512,13 @@ def metadataLevel1(PP):
         headers = pd.read_csv(SCFile,keep_default_na=False)
         cnames = list(headers.columns)
         idx1a = cnames.index('L1_px1_pixel')
-        idx1b = cnames.index('Resolution_velocity_integrate_meter_per_pixel')
+        idx1b = cnames.index('Duration_second')
         idx2a = cnames.index('Make')
         idx2b = cnames.index('Notes')
+        idx3 = cnames.index('Site_ID')
         defaults = ['N/A']*3 + [zmax]*(idx1b - idx1a + 1) +\
             [refdate] + [zmax] + ['N/A']*(idx2b - idx2a + 1)
+        defaults[idx3] = stid
         [SCNameStem,ext] = SCName.split('.')
     else:
         raise ValueError(f"Missing required scale template file {SCFile}.")
@@ -525,9 +543,19 @@ def metadataLevel1(PP):
     one_dir = os.path.basename(DirectoryL1)
     print(f"Generating scale file for: {one_dir}")
     fnames = one_dir.split('_')
-    author = fnames[1] if len(fnames) >1 else 'YC'
-    note = fnames[2] if len(fnames) >2 else 'N/A'
-    
+    author = fnames[1] if len(fnames) >1 else PP.Author
+    note0 = fnames[2] if len(fnames) >2 else 'N/A'
+    usage = PP.Usage
+    d = one_dir.lower()
+    if usage is None:
+        usage = 3
+        if d.startswith('train'):
+            usage = 0
+        elif d.startswith('val') or d.startswith('validate') or d.startswith('validation'):
+            usage = 1
+        elif d.startswith('test'):
+            usage = 2
+        
     # Define output scale file name and check if it exists.
     if scflag == '':
         snamexls=DirectoryL1+os.sep+SCNameStem+'_'+one_dir+ '.' + ext
@@ -536,7 +564,7 @@ def metadataLevel1(PP):
     key1 = 'Name'
     key2 = 'L1L2_res_meter_per_pixel'
     scales_df0 = pd.DataFrame({key1: [''],key2: [-1]})                         # Set default photo resolution as -1 m/pixel.
-    if os.path.isfile(snamexls) and os.path.getsize(snamexls) >10:        
+    if os.path.isfile(snamexls) and os.path.getsize(snamexls) >10:    
         scales_df0 = pd.read_csv(snamexls,encoding= CSVEncoding,\
                                  keep_default_na=False)                        # Loading existing scale file if existed.
             
@@ -570,7 +598,7 @@ def metadataLevel1(PP):
                 img_exts.append(exti)                
         idx = index_natsorted(img_names)
         img_names = np.array(img_names)[idx]
-        img_stems = np.array(img_stems)[idx]   
+        img_stems = np.array(img_stems)[idx]
         npics = len(img_names)
         nvt = nvids + npics
         
@@ -587,6 +615,34 @@ def metadataLevel1(PP):
             orientation = np.zeros((nvids,), dtype=int)
             record_list = []
             defaults_dict = dict(zip(cnames, defaults))
+            
+            # Loading drone flight data if availabel.
+            FCPath = os.path.join(DirectoryL1, ddir)
+            fct = []
+            fcv_path = ''
+            if 'DJI' in v_keywords and os.path.isdir(FCPath):
+                log_path = natsorted(list(Path(FCPath).glob('*Airdata.csv')))
+                fc_path = natsorted(list(Path(FCPath).glob('*FC*.csv')))
+                if len(log_path)>0 and len(fc_path)>0:
+                    print('Reading DJI flight logs from files')
+                    fcv_name = '_'.join(log_path[0].stem.split('-')[:4]) + '_FCV.csv'
+                    fcp_name = '_'.join(log_path[0].stem.split('-')[:4]) + '_FCP.csv'
+                    fcv_path = Path(log_path[0].parent,fcv_name)
+                    fcp_path = Path(log_path[0].parent,fcp_name)
+                    fcv = pd.read_csv(fcv_path)
+                    lognames = fcv.columns.to_list()
+                    fct.append(fcv.to_numpy())
+                    del fcv
+                    fct.append(pd.read_csv(fcp_path).to_numpy())
+                    fcv_path = str(fcv_path)
+                elif len(log_path)>0 and len(fc_path)==0:
+                    print('Loading flight logs for DJI')
+                    fct, _, lognames = readFC(FCPath)
+                    fcv_name = '_'.join(log_path[0].stem.split('-')[:4]) + '_FCV.csv'
+                    fcv_path = str(Path(log_path[0].parent,fcv_name))   
+                    
+            srts = {}
+            ttv = zmax*np.ones((nvids,6))
             for j in range(nvids):
                 count = count + 1
                 t_start = time.time()
@@ -602,6 +658,10 @@ def metadataLevel1(PP):
                 orient = exif_info['Orientation']
                 mak = exif_info['Make']
                 mdl = exif_info['Model']
+                fr = exif_info['FrameRate']
+                dr = exif_info['Duration']
+                note = note0
+                uxy, ux, uy, uz = [zmax] * 4
                 
                 # Extracting lat/lon from gps_info if available3
                 lat_deg, lon_deg, alt, alt_ref = zmax, zmax, zmax, zmax
@@ -615,6 +675,65 @@ def metadataLevel1(PP):
                 if dtm is None: dtm = refdate
                 dtm_str = dtm.strftime("%Y-%m-%d %H:%M")
                 tsec = dtm.second
+                ttv[j,0:6] = datevec(dtm)                                      # Video metadata time.                  
+                
+                # Update video gps and time from flight record if available.
+                if lat_deg == zmax or lon_deg == zmax:
+                    # Read video log data *.SRT if not previously read.
+                    if v_stem not in srts:
+                        DirectoryL1V =  DirectoryL1 + os.sep
+                        srt_path = DirectoryL1V + os.sep + v_stem + '.SRT'
+                        if os.path.isfile(srt_path):
+                            if fcv_path == '':
+                                print('SRT is not aligned with flight log data...')
+                            _, srtj = readSRT(srt_path,fcv_path)
+                            srts[v_stem] = srtj
+                    
+                    # Obtain more accuracy time information from the SRT.
+                    if v_stem in srts:
+                        gpst01 = srts[v_stem][[0,-1],9:]                       # Time: YMDHMS, ms, us, lat, lon, height.
+                        gpst = gpst01[0,:]
+                        ttv[j,0:6] = gpst[0:6]                                 # YMDHM (no seconds).
+                        ttv[j,5] = gpst[5]+gpst[6]/1e3+gpst[7]/1e6 - 1*1/fr    # Estimated time for frame 0.
+                        
+                        # Update gps and time.
+                        lat_deg = gpst[8]
+                        lon_deg = gpst[9]
+                        tsec =  ttv[j,5]
+                        y, m, d, H, M = ttv[j,0:5].astype(int)
+                        if tsec<0:
+                            dtm_new = datetime(y, m, d, H, M, 0)
+                        else:
+                            dtm_new = datetime(y, m, d, H, M, int(tsec))
+                        dtm_str = dtm_new.strftime("%Y-%m-%d %H:%M:%S")
+                        
+                        # Identifying speed from fct if availabe.
+                        if len(fct)>0:
+                            tt0 = fct[0][0,1:7]
+                            dtt = etime(tt0,ttv[j,:])
+                            logtargets = ['xSpeed(mps)','ySpeed(mps)','zSpeed(mps)']
+                            idx = lognames.index(logtargets[0])
+                            idy = lognames.index(logtargets[1])
+                            idz = lognames.index(logtargets[2])
+                            ux = interp1(fct[0][:,0],fct[0][:,idx],dtt)[0]
+                            uy = interp1(fct[0][:,0],fct[0][:,idy],dtt)[0]
+                            uz = interp1(fct[0][:,0],fct[0][:,idz],dtt)[0]
+                            #uxy = np.sqrt(ux**2+uy**2)
+                            
+                            gpst01c = gpst01.copy()
+                            gpst01c[:,5] = gpst01[:,5] + gpst01[:,6]/1e3 + gpst01[:,7]/1e6
+                            dtt01 = etime(tt0,gpst01c[:,0:6])
+                            uxa = fct[0][(fct[0][:,0]>=dtt01[0]) & (fct[0][:,0]<=dtt01[1]),idx]
+                            uya = fct[0][(fct[0][:,0]>=dtt01[0]) & (fct[0][:,0]<=dtt01[1]),idy]
+                            uxya = np.sqrt(uxa **2 + uya **2)                  
+                            uxy = np.mean(uxya)                                # Average horizontal speed.                    
+                            
+                # Get video index.
+                vidx = v_sites[j]
+                if vidx.isdigit():
+                    n0 = len(vidx) - len(vidx.lstrip('0'))
+                    if n0>0: vidx = zeroby * n0 + vidx[n0:]
+                v_sites[j] = vidx
                 
                 # Combining all data in a single list.
                 update_list = {
@@ -624,23 +743,31 @@ def metadataLevel1(PP):
                     "Width_pixel": w,
                     "Height_pixel": h,
                     "L1L2_res_meter_per_pixel": -1,                            # Default resolution -1 m/pixel.
+                    "L1L2_res_millimeter_per_pixel": -1,                       # Default resolution -1 m/pixel.
                     "Valid": 1,
                     "Corrected": 0,
-                    "Usage": 3,
+                    "Usage": usage,
                     "Photo_indicator": 0,                                      # 0 for video, 1 for photo.
                     "Latitude": lat_deg,
                     "Longitude": lon_deg,
                     "Altitude_meter": alt,
-                    "Altitude_reference": alt_ref,
+                    "Altitude_reference": 0,
                     "Height_m": zmax,
+                    'Speed_meter_per_second': uxy,
+                    'Speed_x_meter_per_second': ux,
+                    'Speed_y_meter_per_second': uy,
+                    'Speed_z_meter_per_second': uz,
+                    'Frame_rate_frames_per_second': fr,
+                    'Duration_second': dr,
                     "Date_PST": dtm_str,
                     "Date_Second": tsec,
                     "Make": mak,
                     "Model": mdl,
                     "Author": "YC",
                     "Keyword": v_keywords[j],
-                    "Site_ID": v_sites[j],
-                    "Notes": "N/A"
+                    "Site_ID": v_sites[j] if stid == 'N/A' else stid,
+                    "Video_ID": vidx,
+                    "Notes": note
                     }
                 
                 defaults_dict_new = defaults_dict.copy()
@@ -684,8 +811,8 @@ def metadataLevel1(PP):
                                     scales_v.loc[idx_v,cname] = \
                                         SCTable.loc[idx_sc,cname]
                             # For string formats.
-                            elif cname in ['Folder','Scale_source','Make', \
-                                           'Model','Author','Keyword','Site_ID','Notes']:
+                            elif cname in ['Folder','Scale_source','Make', 'Model',\
+                                           'Author','Keyword','Site_ID','Video_ID','Notes']:
                                 if scales_v.loc[idx_v,cname].lower() == 'n/a':
                                     scales_v.loc[idx_v,cname] = \
                                         SCTable.loc[idx_sc,cname]
@@ -715,12 +842,15 @@ def metadataLevel1(PP):
                     fcp_name = '_'.join(log_path[0].stem.split('-')[:4]) + '_FCP.csv'
                     fcv_path = Path(log_path[0].parent,fcv_name)
                     fcp_path = Path(log_path[0].parent,fcp_name)
-                    fct.append(pd.read_csv(fcv_path).to_numpy())
+                    fcv = pd.read_csv(fcv_path)
+                    lognames = fcv.columns.to_list()
+                    fct.append(fcv.to_numpy())
+                    del fcv
                     fct.append(pd.read_csv(fcp_path).to_numpy())
                     fcv_path = str(fcv_path)
                 elif len(log_path)>0 and len(fc_path)==0:
                     print('Loading flight logs for DJI')
-                    fct, _, _ = readFC(FCPath)
+                    fct, _, lognames = readFC(FCPath)
                     
             # Output AI model information if enabled.
             if scsource in 'ai':
@@ -741,7 +871,8 @@ def metadataLevel1(PP):
                         npp = sum(p.numel() for p in model.model.parameters())/1e6
                         nl = sum(isinstance(m, nn.Conv2d) for m in modules)
                         print(formatSpec2b %(nl, npp,nmodules))
-   
+                    print(formatSpec2c %(iou,conf1))
+
             psize = np.zeros((npics, 2), dtype=int)
             orientation = np.zeros((npics,), dtype=int)
             record_list = []
@@ -757,14 +888,20 @@ def metadataLevel1(PP):
             gps = zmax*np.ones((npics,4+2+5*2))
             tt = zmax*np.ones((npics,6))
             srts = {}
-            
             for j in range(npics):
                 count = count + 1
                 t_start = time.time()
                 pic_name = img_names[j]
                 pic_stem = pic_name.split('.')[0]
                 pic_path = os.path.join(DirectoryL1, pic_name)
-                
+                note = note0
+                vidx = sites[j]
+                if vidx.isdigit():
+                    n0 = len(vidx) - len(vidx.lstrip('0'))
+                    if n0>0: vidx = zeroby * n0 + vidx[n0:]
+                sites[j] = vidx
+
+                fr, dr, uxy, ux, uy, uz = [zmax] * 6
                 rowj = scales_df0[scales_df0[key1] == pic_name]                # Checking if scale data exists for pic_name
                 if not(rowj.shape[0]>0 and rowj[key2].values[0]>0) or \
                     OverWriteSCRows or OverWriteAll:
@@ -773,7 +910,8 @@ def metadataLevel1(PP):
                     exif_info = readEXIF(pic_path)
                     w = exif_info['Width']
                     h = exif_info['Height']
-                    
+                    fr = exif_info['FrameRate']
+                    dr = exif_info['Duration']                    
                     mak = exif_info['Make']
                     mdl = exif_info['Model']
                     orient = exif_info['Orientation']
@@ -835,6 +973,7 @@ def metadataLevel1(PP):
                                 vid_stem = "_".join(pic_name.split("_", 2)[:2])
                                 fmid = float(pic_stem.split("_", 2)[2])
                                 pic_path2 = DirectoryL1V + os.sep + vid_stem + '.mov'
+                                # Time derived from video file.
                                 if isfile(pic_path2):
                                     exif_info = readEXIF(pic_path2)
                                     mak = exif_info['Make']
@@ -855,6 +994,7 @@ def metadataLevel1(PP):
                                     gps[j,3] = alt_ref
                                     
                                     # Identify frame index and compute time at this frame.
+                                    dr = exif_info['Duration']
                                     fr = exif_info['FrameRate']
                                     tsec = fmid*1/fr if fr>0 else 0            # How many seconds of the photo.
                                     if dtm != refdate:
@@ -864,7 +1004,6 @@ def metadataLevel1(PP):
                                 # Read video log data *.SRT if not previously read.
                                 if vid_stem not in srts:
                                     srt_path = DirectoryL1V + os.sep + vid_stem + '.SRT'
-                                    #gps_path = DirectoryL1V + os.sep + vid_stem + '_GPS.csv'
                                     if os.path.isfile(srt_path):
                                         #if os.path.isfile(gps_path):
                                         #    srtj = pd.read_csv(gps_path).to_numpy()
@@ -875,20 +1014,30 @@ def metadataLevel1(PP):
                                         srts[vid_stem] = srtj
                                         
                                 # Obtain more accurate GPS and time info from the SRT.
+                                # Time derived from SRT files.
                                 if vid_stem in srts:
-                                    fmid_min = srts[vid_stem][0,0]
                                     fmid_max = srts[vid_stem][-1,0]
-                                    if fmid>= fmid_min and fmid<=fmid_max:
-                                        gpst = interp1(srts[vid_stem][:,0], 
-                                                       srts[vid_stem][:,9:],fmid,
-                                                       method='linear')
-                                        tt[j,0:6] = gpst[0:6]                  # YMDHM (no seconds).
-                                        tt[j,5] = gpst[5]+gpst[6]/1e3+gpst[7]/1e6  
-                                        gps[j,0] = gpst[8]                     # SRT: Latitude.
-                                        gps[j,1] = gpst[9]                     # SRT: longitude.
-                                        gps[j,9] = gpst[10]                    # SRT: similar to height above take off.
-                                        gps[j,14] = poly(gpst[10])/1000;       # Above takeoff height derived scale.
-                                        #gps[j,14] = (cc[0]*gpst[10] + cc[1])/1e3; 
+                                    if fmid<=fmid_max:
+                                        gpst = interp1(
+                                            srts[vid_stem][:,0], 
+                                            srts[vid_stem][:,9:],fmid,
+                                            method='linear')
+                                    else:
+                                        gpst = srts[vid_stem][-1,9:]
+                                        t_last = pd.Timestamp(*map(int, gpst[:6]))
+                                        ts_new = gpst[6]/1e3 + gpst[7]/1e6 + (fmid - fmid_max)/fr
+                                        t_new = t_last +  pd.to_timedelta(ts_new,unit='s')
+                                        gpst[:6] = np.array(list(t_new.timetuple()[:6]))
+                                        gpst[6] = t_new.microsecond//1000
+                                        gpst[7] = t_new.microsecond%1000
+                                    # 
+                                    tt[j,0:6] = gpst[0:6]                      # YMDHM (no seconds).
+                                    tt[j,5] = gpst[5]+gpst[6]/1e3+gpst[7]/1e6  
+                                    gps[j,0] = gpst[8]                         # SRT: Latitude.
+                                    gps[j,1] = gpst[9]                         # SRT: longitude.
+                                    gps[j,9] = gpst[10]                        # SRT: similar to height above take off.
+                                    gps[j,14] = poly(gpst[10])/1000;           # Above takeoff height derived scale.
+                                    #gps[j,14] = (cc[0]*gpst[10] + cc[1])/1e3; 
                                         
                     # Extra correction for drone photos and drone video photos.
                     if len(fct)>0 and isdrone:
@@ -908,6 +1057,17 @@ def metadataLevel1(PP):
                                 if gps[j,9] == zmax:                           # Only updating height without values.
                                     gps[j,9] = h4p[0,2]                        # Updating height.          
                                     gps[j,14] = scp[0,2]                       # Updating scale.
+ 
+                                # Identifying speed from fct if availabe.
+                                logtargets = ['xSpeed(mps)','ySpeed(mps)','zSpeed(mps)']
+                                idx = lognames.index(logtargets[0])
+                                idy = lognames.index(logtargets[1])
+                                idz = lognames.index(logtargets[2])
+                                uxyz = fct[1][:,[idx,idy,idz]]
+                                uxyzp = interp1(tx,uxyz,tj,method='linear')    # Interpolated velocity.
+                                ux,uy,uz = uxyzp[0]
+                                uxy = np.sqrt(ux**2 + uy**2)                   # Average horizontal speed.    
+                                
                         # For drone video derived photos.
                         elif len(picstr) == 3:
                             tj = etime(fct[0][0,1:7],tt[j,:])
@@ -925,8 +1085,17 @@ def metadataLevel1(PP):
                                 if gps[j,9] == zmax:                           # Only updating height without values.
                                     gps[j,9] = h4p[0,2]                        # Updating height.          
                                     gps[j,14] = scp[0,2]                       # Updating scale.
-                            
-    
+                                    
+                                # Identifying speed from fct if availabe.
+                                logtargets = ['xSpeed(mps)','ySpeed(mps)','zSpeed(mps)']
+                                idx = lognames.index(logtargets[0])
+                                idy = lognames.index(logtargets[1])
+                                idz = lognames.index(logtargets[2])
+                                uxyz = fct[0][:,[idx,idy,idz]]
+                                uxyzp = interp1(tx,uxyz,tj,method='linear')    # Interpolated velocity.
+                                ux,uy,uz = uxyzp[0]
+                                uxy = np.sqrt(ux**2 + uy**2)                   # Average horizontal speed.
+                                
                     tsec =  tt[j,5]
                     y, m, d, H, M = tt[j,0:5].astype(int)
                     if tsec<0:
@@ -940,36 +1109,116 @@ def metadataLevel1(PP):
                     [sc1,sc2,res1,res2, ww,hh,err] = [zmax]*7
                     [res12, res12m] = [-1]*2                                   # Set default resolution -1 m/pixel.
                     scale_source = 'N/A'
-                    
+
                     # Updating data if included in SCTable.
                     if len(SCTable)>0 and pic_stem in SCTable['Name_stem'].values:
                         rj = SCTable.loc[SCTable['Name_stem'] == pic_stem]
-                        res12 = rj['L1L2_res_meter_per_pixel'].iloc[0]
-                        if res12>0:                                            # Update data only when res12 is positive.
-                            scale_source = rj['Scale_source'].iloc[0]
-                            x11 = rj['L1_px1_pixel'].iloc[0]
-                            y11 = rj['L1_py1_pixel'].iloc[0]
-                            x12 = rj['L1_px2_pixel'].iloc[0]
-                            y12 = rj['L1_py2_pixel'].iloc[0]
-                            x21 = rj['L2_px1_pixel'].iloc[0]
-                            y21 = rj['L2_py1_pixel'].iloc[0]
-                            x22 = rj['L2_px2_pixel'].iloc[0]
-                            y22 = rj['L2_py2_pixel'].iloc[0]
-                            sc1 = rj['L1_marker_meter'].iloc[0]
-                            sc2 = rj['L2_marker_meter'].iloc[0]
-                            res1 = rj['L1_res_meter_per_pixel'].iloc[0]
-                            res2 = rj['L2_res_meter_per_pixel'].iloc[0]
+                        
+                        # Further check if the two image, to avoid identical  #
+                        # image name of photos from two cameras.
+                        ta = pd.to_datetime(rj.Date_PST.iloc[0], errors='coerce')
+                        tb = pd.to_datetime(dtm_str, errors='coerce')
+                        dts = abs((ta - tb).total_seconds())
+                        dist = gpsdist(rj.Latitude.iloc[0],rj.Longitude.iloc[0],gps[j,0],gps[j,1])    
+                        cond1 = keywords[j].lower() != 'img'
+                        cond2 = (not cond1) and mak == rj.Make.iloc[0] and mdl == rj.Model.iloc[0]
+                        cond3 = dts<=61                                        # 61 s.
+                        cond4 = dist<=100                                      # 100 m.
+                        cond5 = keywords[j].lower() == 'img' and len(picstr) == 3 and ispng
+                        
+                        if cond1 or cond2 or cond3 or cond4 or cond5:
                             res12 = rj['L1L2_res_meter_per_pixel'].iloc[0]
-                            res12m = rj['L1L2_res_millimeter_per_pixel'].iloc[0]
-                            ww = res12*w
-                            hh = res12*h 
-                            err = rj['Relative_error_percent'].iloc[0]
-                            gps[j,4] = rj['Latitude_SFA'].iloc[0]
-                            gps[j,5] = rj['Longitude_SFA'].iloc[0]
-                            if rj['Site_ID'].iloc[0] != 'N/A':
-                                sites[j] = rj['Site_ID'].iloc[0] 
-                            if rj['Notes'].iloc[0] != 'N/A':
-                                note = rj['Notes'].iloc[0] 
+                            if res12>0:                                        # Update data only when res12 is positive.
+                                scale_source = rj['Scale_source'].iloc[0]
+                                x11 = rj['L1_px1_pixel'].iloc[0]
+                                y11 = rj['L1_py1_pixel'].iloc[0]
+                                x12 = rj['L1_px2_pixel'].iloc[0]
+                                y12 = rj['L1_py2_pixel'].iloc[0]
+                                x21 = rj['L2_px1_pixel'].iloc[0]
+                                y21 = rj['L2_py1_pixel'].iloc[0]
+                                x22 = rj['L2_px2_pixel'].iloc[0]
+                                y22 = rj['L2_py2_pixel'].iloc[0]
+                                sc1 = rj['L1_marker_meter'].iloc[0]
+                                sc2 = rj['L2_marker_meter'].iloc[0]
+                                res1 = rj['L1_res_meter_per_pixel'].iloc[0]
+                                res2 = rj['L2_res_meter_per_pixel'].iloc[0]
+                                res12 = rj['L1L2_res_meter_per_pixel'].iloc[0]
+                                res12m = rj['L1L2_res_millimeter_per_pixel'].iloc[0]
+                                ww = res12*w
+                                hh = res12*h 
+                                uxy0 = rj['Speed_meter_per_second'].iloc[0]
+                                ux0 = rj['Speed_x_meter_per_second'].iloc[0]
+                                uy0 = rj['Speed_y_meter_per_second'].iloc[0]
+                                uz0 = rj['Speed_z_meter_per_second'].iloc[0]
+                                fr0 = rj['Frame_rate_frames_per_second'].iloc[0]
+                                dr0 = rj['Duration_second'].iloc[0]
+                                if uxy0 != zmax: uxy = uxy0
+                                if ux0 != zmax: ux = ux0
+                                if uy0 != zmax: uy = uy0
+                                if uz0 != zmax: uz = uz0
+                                if fr0 != zmax: fr = fr0
+                                if dr0 != zmax: dr = fr0
+                                err = rj['Relative_error_percent'].iloc[0]
+                                gps[j,0] = rj['Latitude'].iloc[0]
+                                gps[j,1] = rj['Longitude'].iloc[0]
+                                gps[j,2] = rj['Altitude_meter'].iloc[0]
+                                gps[j,4] = rj['Latitude_SFA'].iloc[0]
+                                gps[j,5] = rj['Longitude_SFA'].iloc[0]
+                                rjdate = pd.to_datetime(rj['Date_PST'], errors='coerce')
+                                if rjdate.iloc[0] != refdate:
+                                    dtm_new = pd.to_datetime(rj['Date_PST'].iloc[0], errors='coerce')
+                                    tsec = rj['Date_Second'].iloc[0]
+                                    if tsec>0: 
+                                        dtm_new = dtm_new.floor('min') + \
+                                        pd.to_timedelta(tsec, unit='s')
+                                    dtm_str = dtm_new.strftime("%Y-%m-%d %H:%M:%S")
+                                if rj['Site_ID'].iloc[0] != 'N/A': sites[j] = rj['Site_ID'].iloc[0] 
+                                if rj['Video_ID'].iloc[0] != 'N/A': vidx = rj['Video_ID'].iloc[0] 
+                                if rj['Notes'].iloc[0] != 'N/A': note = rj['Notes'].iloc[0]
+                                if rj['Make'].iloc[0] != 'N/A': mak = rj['Make'].iloc[0]
+                                if rj['Model'].iloc[0] != 'N/A': mdl = rj['Model'].iloc[0]
+                                if rj['Author'].iloc[0] != 'N/A': author = rj['Author'].iloc[0]
+                                
+                    # For video-derived images with user video metadata.
+                    if len(SCTable)>0 and len(picstr)==3 and \
+                    '_'.join(picstr[0:2]) in SCTable['Name_stem'].values:
+                        v2p_stem = '_'.join(picstr[0:2])
+                        rjj = SCTable.loc[SCTable['Name_stem'] == v2p_stem]
+                        if gps[j,0] == zmax or gps[j,1] == zmax: 
+                            gps[j,0] = rjj['Latitude'].iloc[0]
+                            gps[j,1] = rjj['Longitude'].iloc[0]
+                            gps[j,2] = rjj['Altitude_meter'].iloc[0]
+                        if dtm_new == refdate: 
+                            dtm_new = pd.to_datetime(rjj['Date_PST'].iloc[0], errors='coerce')
+                            tsec = rjj['Date_Second'].iloc[0]
+                            if tsec>0: dtm_new += pd.to_timedelta(tsec, unit='s')
+                            dtm_str = dtm_new.strftime("%Y-%m-%d %H:%M:%S")
+                            
+                        if sites[j] == 'N/A':sites[j] = rjj['Site_ID'].iloc[0]
+                        if vidx == 'N/A': vidx = rjj['Video_ID'].iloc[0]
+                        if note == 'N/A': note = rjj['Notes'].iloc[0]
+                        if mak == 'N/A': mak = rjj['Make'].iloc[0]
+                        if mdl == 'N/A': mdl = rjj['Model'].iloc[0]
+                        if author == 'N/A': author = rjj['Author'].iloc[0]
+                        if uxy == zmax: uxy = rjj['Speed_meter_per_second'].iloc[0]
+                        if ux == zmax: ux = rjj['Speed_x_meter_per_second'].iloc[0]
+                        if uy == zmax: uy = rjj['Speed_y_meter_per_second'].iloc[0]
+                        if uz == zmax: uz = rjj['Speed_z_meter_per_second'].iloc[0]
+                        if fr == zmax: fr = rjj['Frame_rate_frames_per_second'].iloc[0]
+                        if dr == zmax: dr = rjj['Duration_second'].iloc[0]
+                        
+                        # Do not update time in the following cases:
+                        # a) both fligth log and SRT exist;
+                        # b) SRT exsits. 
+                        if fr >0 and vid_stem not in srts:
+                            fmid = float(pic_stem.split("_", 2)[2])
+                            tsecnew = fmid*1/fr
+                            tsec = tsecnew if tsec <0 else tsec + tsecnew
+                            dtm_new = pd.to_datetime(dtm_new)
+                            dtm_new = dtm_new.floor('min') + pd.to_timedelta(tsec, unit='s')
+                            tsec = dtm_new.second + dtm_new.microsecond/1e6 + dtm_new.nanosecond/1e9
+                            dtm_new = dtm_new.floor('s')
+                            dtm_str = dtm_new.strftime("%Y-%m-%d %H:%M:%S")
                             
                     # Updating data if photo resolution is not found.
                     if scsource in 'ai' and res12<0:
@@ -988,12 +1237,8 @@ def metadataLevel1(PP):
                         if printimgsize: print(f'Inference image size: {img_size}')
                         
                         # Generate parameters used for AI inference.
-                        #conf0 = PP.YOLOConfidence
-                        conf0 = PP.ConfidenceThreshold
-                        iou = PP.YOLOIOU
                         max_det = PP.MaximumNumberOfObject
-                        data = {"imgsz": img_size, "conf": conf0, "iou": iou,"max_det":max_det}
-                        #data = {"conf": conf0, "iou": iou,"max_det":max_det}
+                        data = {"imgsz": img_size, "conf": conf1, "iou": iou,"max_det":max_det}
                         
                         # Access AI from cloud.
                         names = []; values  = []
@@ -1058,7 +1303,7 @@ def metadataLevel1(PP):
                             pmin = 2                                           # Minimum pixel of sediment away from the photo boundary.
                             tfs = ((values[:, 0] > pmin)  & (values[:, 1] > pmin)  & 
                                 (values[:, 2] < w - pmin)  & (values[:, 3] <= h - pmin) 
-                                & (values[:,5]>=PP.ConfidenceThreshold))
+                                & (values[:,5]>=conf1))
                             names = names[tfs]; values = values[tfs,:]
                             nrc = len(names)
                             scname = '_'.join(list(set(names[:nrc])))
@@ -1153,7 +1398,9 @@ def metadataLevel1(PP):
                     ww = abs(res12) * w
                     hh = abs(res12) * h 
                     
+                    
                     # Combining all data in a single list.
+                    if isinstance(vidx, (int, float, np.number)): vidx = str(int(vidx))
                     update_list = {
                         "Name": pic_name,
                         "Folder": one_dir,
@@ -1179,7 +1426,7 @@ def metadataLevel1(PP):
                         "Relative_error_percent": err,   
                         "Valid": 1,
                         "Corrected": 0,
-                        "Usage": 3,
+                        "Usage": usage,
                         "Photo_indicator": pv_indiactor,                       # 0 for video, 1 for photo, 2 for video frame.
                         "Latitude": gps[j,0],                                  # From photo exif, video exif, or log.
                         "Longitude": gps[j,1],                                 # From photo exif, video exif, or log.
@@ -1198,13 +1445,20 @@ def metadataLevel1(PP):
                         "Resolution_above_drone_meter_per_pixel": gps[j,13],
                         "Resolution_above_takeoff_meter_per_pixel": gps[j,14],	
                         "Resolution_velocity_integrate_meter_per_pixel": gps[j,15],
+                        'Speed_meter_per_second': uxy,
+                        'Speed_x_meter_per_second': ux,
+                        'Speed_y_meter_per_second': uy,
+                        'Speed_z_meter_per_second': uz,
+                        'Frame_rate_frames_per_second': fr,
+                        'Duration_second': dr,
                         "Date_PST": dtm_str,
                         "Date_Second": tsec,
                         "Make": mak,
                         "Model": mdl,
                         "Author": author,
                         "Keyword": keywords[j],
-                        "Site_ID": sites[j],
+                        "Site_ID": sites[j] if stid == 'N/A' else stid,
+                        'Video_ID': vidx,
                         "Notes": note
                     }
                     defaults_dict_new = defaults_dict.copy()
@@ -1221,7 +1475,8 @@ def metadataLevel1(PP):
                         "Folder": one_dir,
                         "Date_PST": dtm_str,
                         "Date_Second": tsec,
-                        "Site_ID": sites[j],
+                        "Site_ID": sites[j] if stid == 'N/A' else stid,
+                        'Video_ID': vidx,
                         "Notes": note
                         }
                     defaults_dict_new.update(update_list)
@@ -1232,6 +1487,8 @@ def metadataLevel1(PP):
                 if res12m == -1:
                     print(formatSpec2a %(count,nvt,j+1,npics,pic_name,scale_source,\
                                         abs(res12m), status, 100*(j+1)/npics, dt))
+                    if scsource in 'data' and not os.path.isfile(clspath):
+                        print(f'Warning: manual scale data not found in {clspath}...')
                 else:
                     print(formatSpec2 %(count,nvt,j+1,npics,pic_name,scale_source,\
                                         res12m, status, 100*(j+1)/npics, dt))
@@ -1247,9 +1504,11 @@ def metadataLevel1(PP):
         # Save the final CSV
         if os.path.isfile(snamexls):
             os.remove(snamexls)
-        if len(scales_df)>0: scales_df.to_csv(snamexls, index=False)
-        tt = time.time() - t0
-        #print(formatSpec3 %(tt,tt/nvt)) if nvt>0 else print(formatSpec4 %(tt))
+        if len(scales_df)>0: 
+            scales_df['Video_ID'] = scales_df['Video_ID'].astype(str).str.strip()
+            scales_df.to_csv(snamexls, index=False)
+        #tts = time.time() - t0
+        #print(formatSpec3 %(tts,tts/nvt)) if nvt>0 else print(formatSpec4 %(tts))
         
     return scales_df 
 
@@ -1638,7 +1897,6 @@ def backgroundLevel1(PP):
     WorkDir = PP.Directory
     pext = PP.TargetPhotoExtension
     obj_name = PP.ObjectName
-    #conf0 = PP.ConfidenceThresholdYOLO                                        # Default YOLO confidence threshold.
     conf1 = PP.ConfidenceThresholdUser                                         # User confidence threshold.
     iou = PP.YOLOIOU   
     exludes = PP.ExcludingPhotos
@@ -1841,7 +2099,7 @@ def cutPV(WorkDir,cut_size_w=1280,cut_size_h=1280,nframe=120, \
     
     timestart=time.time()                                                      # Start time of the code.
     formatSpec0 = '='*80
-    formatSpec1 = 'Cuts photos output folder: %s'
+    #formatSpec1 = 'Cuts photos output folder: %s'
     formatSpec2 = 'Video photo output folder: %s'
     formatSpec3 = '%s: get frame %g from %g/%g in %.2f s (%3.2f%%)'
     formatSpec3b = '%s: get frame %g from %g/%g in %.2f s (%3.2f%%), file existed, skipping...'
@@ -1852,7 +2110,7 @@ def cutPV(WorkDir,cut_size_w=1280,cut_size_h=1280,nframe=120, \
     cut_save_root = save_path + os.sep + subdir                                # Master output folder path.
     #v2p_save_root = save_path + os.sep + imgfmt[1:].upper()
     v2p_save_root = save_path
-    print(formatSpec1 %(cut_save_root))
+    #print(formatSpec1 %(cut_save_root))
     if not os.path.exists(cut_save_root) and subdir != '': os.mkdir(cut_save_root)# Create a folder to save all data.
     
     flag = True
@@ -2085,7 +2343,7 @@ def photoResize(inputdir,desiredsize=12_000_000,flag='resized', overwrite=False,
 #%% Performing qualicty control of grain size data.
 def qualityControl(casedir,datatype='pv',videos=None,circularitypercenterror=5,
                    minimumgrainnumber=100, minimumdroneheight=1.5,startindex=0,coeff=None, 
-                   writedata = True,threshold=0.35,
+                   writedata = True,threshold=0.35, zeroby = 'Z',
                    version='V3',modelname='YOLO11m.1280.20250322'):
     
     # Output information format control.
@@ -2119,6 +2377,7 @@ def qualityControl(casedir,datatype='pv',videos=None,circularitypercenterror=5,
         stname = '_'.join([vkey,version,fname,modelname,str(int(threshold*100))]) + '.csv'
         stpath = os.path.join(casedir,stname)
     gsd = pd.read_csv(stpath,keep_default_na=False)                            # Loading pre-generated grain size data.
+    gsd['Site_ID'] = gsd['Site_ID'].astype(str).str.strip()
     print(fmt0 %(fname))
     
     # Processing for video data.
@@ -2144,7 +2403,12 @@ def qualityControl(casedir,datatype='pv',videos=None,circularitypercenterror=5,
             dmv = wv*hv/1e6
             fr = info['FrameRate']
             drv = info['Duration']
-            vid = int(vname.split('.')[0].split('_')[1])
+            vid = vname.split('.')[0].split('_')[1]
+            if not str(vid).strip().isdigit(): 
+                raise ValueError("Video index is not numeric...")
+            vidi = int(vid)
+            nv0 = len(vid) - len(vid.lstrip('0'))
+            if nv0>0: vid = zeroby * nv0 + vid[nv0:]
             gsdi = gsd[gsd.Site_ID == vid]
             n00v = gsdi.shape[0]
             gsdi = gsdi[gsdi['L1L2_res_meter_per_pixel']>0]
@@ -2164,7 +2428,7 @@ def qualityControl(casedir,datatype='pv',videos=None,circularitypercenterror=5,
             rav, r0v, r1v, r2v =  a2v/a0v, n0v/n00v, n1v/n00v, n2v/n00v
             eav, env = a0v/drv, g0v/drv                                        # Efficiency.
             gnv = g0v/n0v                                                      # Grain number per frame.
-            sti = np.array([typeid,i+startindex,vid,fr,wv,hv,dmv, drv,g0v,a0v,a2v,rav, 
+            sti = np.array([typeid,i+startindex,vidi,fr,wv,hv,dmv, drv,g0v,a0v,a2v,rav, 
                             n00v,n0v,n1v,n2v, r0v, r1v, r2v, eav,env,gnv])
             drs+= drv
             g0vs+= g0v
@@ -2228,7 +2492,8 @@ def qualityControl(casedir,datatype='pv',videos=None,circularitypercenterror=5,
             a2p = np.sum(gsdi['Area_m2'])
             rap = a2p/a0p
             rap, r0p, r1p, r2p =  a2p/a0p, n0p/n00p, n1p/n00p, n2p/n00p
-            eap, enp = a0p/drp, g0p/drp
+            eap, enp = [0] * 2
+            if drp >0: eap, enp = a0p/drp, g0p/drp
             gnp = g0p / n0p
             stp[0,[4,5,6]] = np.array([w,h,dm])
             stp[0,7:] = np.array([drp,g0p,a0p,a2p,rap, n00p,n0p,n1p,n2p, r0p, r1p, r2p, eap,enp, gnp])
@@ -2251,7 +2516,8 @@ def qualityControl(casedir,datatype='pv',videos=None,circularitypercenterror=5,
         n1 = n1p + n1vs
         n2 = n2p + n2vs
         ra, r0, r1, r2 =  a2/a0, n0/n00, n1/n00, n2/n00
-        ea, en = a0/dr, g0/dr
+        ea, en = [0] * 2
+        if dr >0: ea, en = a0/dr, g0/dr
         gn = g0/n0
         stvp[0,7:] = np.array([dr,g0, a0,a2,ra,n00,n0,n1,n2, r0, r1, r2, ea, en,gn])
         print(fmt4a %(dr,a0,a2,ra*100,n00,n2,r2*100))

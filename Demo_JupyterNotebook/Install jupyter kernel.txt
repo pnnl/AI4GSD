@@ -1,16 +1,16 @@
-1. Runing Jupyter Notebook in Ubuntu.
+1. Running Jupyter Notebook in Ubuntu.
 1a. Assuming you have an environment for AI4GSD called "sfa" (or any other names you used)
-1b. Activiate Python environment: in terminal, type: conda activate sfa
+1b. Activate Python environment: in terminal, type: conda activate sfa
 1c. Install jypyter if not already installed: pip install jupyter
 1d. Run Jypyter Notebook by: type jupyter notebook in sfa terminal.
 
-2. Runing Jupyter Notebook in Windows.
-2a. When running the code in JupyterNoteBook and the code cannot find installed packages. It may be related to wrong kernel selection. This occurs when there are more than one environment in the anaconda. To fix this, it is required to "Install ipykernel" in the correct user environment.
+2. Running Jupyter Notebook in Windows.
+2a. When running the code in Jupyter Notebook and the code cannot find installed packages. It may be related to wrong kernel selection. This occurs when there are more than one environment in the anaconda. To fix this, it is required to "Install ipykernel" in the correct user environment.
 2b. For AI4GSD, do the following to install your (for example, sfa) kernel: 
 pip install ipykernel
 python -m ipykernel install --user --name your_env_name --display-name "Python (your_env_name)"
 
-2c. After the install of the sfa kernel, then you can start the Jupyter NoteBook and then select the desired kernel.
+2c. After the install of the sfa kernel, then you can start the Jupyter Notebook and then select the desired kernel.
 
 How to run Jupyter for D: or other path
 Open Anaconda Prompt
@@ -19,6 +19,6 @@ jupyter notebook --notebook-dir="D:"
 
 The default is in C:
 
-Difference: Code/MarkDown/Raw
+Difference: Code/Markdown/Raw
 
 To copy: Ctrl C/Ctrl V

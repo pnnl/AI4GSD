@@ -163,7 +163,7 @@ def Photo2GSDSingle(PP):
         headers_sc = pd.read_csv(SCFile,keep_default_na=False)
         cnames = list(headers_sc.columns)
         idx1a = cnames.index('L1_px1_pixel')                               
-        idx1b = cnames.index('Resolution_velocity_integrate_meter_per_pixel')
+        idx1b = cnames.index('Duration_second')
         idx2a = cnames.index('Make')
         idx2b = cnames.index('Notes')
         defaults = [['N/A']*idx1a + [zmax]*(idx1b - idx1a + 1) +\
@@ -829,7 +829,7 @@ def Photo2GSDSingle(PP):
                     plt.show() if fig_show else plt.close(1)
                     plt.close('all')
                     imgi = None
-            
+
                 if PP.SaveFigure and PP.SaveGSDCurve and nrs>= 2:
                     if not useagg and not fig_show: 
                         matplotlib.use("Agg")
@@ -843,16 +843,20 @@ def Photo2GSDSingle(PP):
                         'axes.unicode_minus': False,
                     })
                     dpi_gsd = PP.SaveGSDCurveResolution
+                    xmin = np.min([xaw.min(),xah.min(),xar.min()])*sc
+                    xmax = np.max([xaw.max(),xah.max(),xar.max()])*sc
+                    xmin = max(0, np.floor(xmin))
+                    if xmax >1: xmin, xmax = 0, np.ceil(xmax)
+                    xmax_p = xmin + (xmax - xmin)*0.6
                     
                     #% Grain size distribution: using width data.
                     outFigWidth = SaveDir + os.sep + stem + '_' + outkeyword + '_Width' + '.jpg'
                     plt.figure(2,figsize=(5,3))
                     plt.plot(xcw*sc,fcw*100, color='red', linewidth=1,marker='o',markersize=3,label='Width: by count')
                     plt.plot(xaw*sc,faw*100, color='black', linewidth=1,marker='s',markersize=3,label='Width: by area')
-                    xmin = xaw[0]*sc; xmax = xaw[-1]*sc; xmax_p = xmin + (xmax - xmin)*0.8
                     plt.plot(np.array([xmin,xmax_p]),np.array([50,50]), linestyle='--', color='black', linewidth=1)
                     plt.legend()
-                    plt.xlim(xaw[0]*sc, xaw[-1]*sc)
+                    plt.xlim(xmin, xmax)
                     plt.ylim(0, 100)
                     plt.xlabel(f'Grain Size ({unit})')
                     plt.ylabel('Percent finer (%)')
@@ -865,10 +869,9 @@ def Photo2GSDSingle(PP):
                     plt.figure(3,figsize=(5,3))
                     plt.plot(xch*sc,fch*100, color='red', linewidth=1,marker='o',markersize=3,label='Height: by count')
                     plt.plot(xah*sc,fah*100, color='black', linewidth=1,marker='s',markersize=3,label='Height: by area')
-                    xmin = xah[0]*sc; xmax = xah[-1]*sc; xmax_p = xmin + (xmax - xmin)*0.8
                     plt.plot(np.array([xmin,xmax_p]),np.array([50,50]), linestyle='--', color='black', linewidth=1)
                     plt.legend()
-                    plt.xlim(xah[0]*sc, xah[-1]*sc)
+                    plt.xlim(xmin, xmax)
                     plt.ylim(0, 100)
                     plt.xlabel(f'Grain Size ({unit})')
                     plt.ylabel('Percent finer (%)')
@@ -881,10 +884,9 @@ def Photo2GSDSingle(PP):
                     plt.figure(4,figsize=(5,3))
                     plt.plot(xcr*sc,fcr*100, color='red', linewidth=1,marker='o',markersize=3,label='Diagonal: by count')
                     plt.plot(xar*sc,far*100, color='black', linewidth=1,marker='s',markersize=3,label='Diagonal: by area')
-                    xmin = xar[0]*sc; xmax = xar[-1]*sc; xmax_p = xmin + (xmax - xmin)*0.8
                     plt.plot(np.array([xmin,xmax_p]),np.array([50,50]), linestyle='--', color='black', linewidth=1)
                     plt.legend()
-                    plt.xlim(xar[0]*sc, xar[-1]*sc)
+                    plt.xlim(xmin, xmax)
                     plt.ylim(0, 100)
                     plt.xlabel(f'Grain Size ({unit})')
                     plt.ylabel('Percent finer (%)')
@@ -935,7 +937,7 @@ def Photo2GSDSingle(PP):
                     # Prepare data.
                     xc = [xcw, xch, xcr, xaw, xah, xar]
                     fc = [fcw, fch, fcr, faw, fah, far]
-                    del fcw, xcw, faw, xaw, fch, xch, fah, xah, fcr, xcr, far, xar
+                    #del fcw, xcw, faw, xaw, fch, xch, fah, xah, fcr, xcr, far, xar
                     colors = PP.OverlayGSDColor
                     colorsm = PP.OverlayGSDManualColor
                     colorsf = PP.OverlayGSDFieldColor
@@ -1215,8 +1217,8 @@ def Photo2GSDSingle(PP):
                                         
                     # Adjust the overal xlabel and ylabel.
                     if PP.SaveOverlayGSD or PP.SaveOverlayField:
-                        nx = PP.OverlayGSDXTickNumber
-                        ny = PP.OverlayGSDYTickNumber
+                        nx = PP.OverlayGSDXTickNumber                          # Number of xticks.
+                        ny = PP.OverlayGSDYTickNumber                          # Number of yticks.
                         ax.set_xlim(xmin, xmax)
                         ax.set_ylim(ymin, ymax)
                         yticks = np.linspace(ymin, ymax, ny)          

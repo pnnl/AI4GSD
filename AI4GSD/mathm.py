@@ -20,7 +20,7 @@
 # limitations under the License.                                              #
 
 #%% Required package.
-import os, pathlib
+import os, pathlib, math
 import numpy as np
 import pandas as pd
 from natsort import natsorted
@@ -391,7 +391,41 @@ def stats(x, y):
     
     return {"r2": r2, "nse": nse, 'me': me, 'mae': mae, 'rmse': rmse, \
             "mpe": mpe, "mape": mape, 'rmse': rmse,'nrmse':nrmse,'rmspe':rmspe}
-        
+
+#%% Compute distance (meters) between two GPS coordinates (input in degress).
+def gpsdist(lat1, lon1, lat2, lon2):
+    
+    R = 6371000                                                                # Earth radius in meters
+    lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+    a = math.sin(dlat/2)**2 + math.cos(lat1)*math.cos(lat2)*math.sin(dlon/2)**2
+    d = 2 * R * math.asin(math.sqrt(a))
+    return d
+
+#%% Compute bounding box corrners, size, and area.
+def bboxinfo(lats, lons):
+    min_lat, max_lat = min(lats), max(lats)
+    min_lon, max_lon = min(lons), max(lons)
+    bbox = (min_lat, min_lon, max_lat, max_lon)
+    width_m  = gpsdist(min_lat, min_lon, min_lat, max_lon)
+    height_m = gpsdist(min_lat, min_lon, max_lat, min_lon)
+    area_m2 = width_m * height_m
+    mid_lat = (min_lat + max_lat) / 2
+    mid_lon = (min_lon + max_lon) / 2
+    center = (mid_lat, mid_lon)
+    vertical_centerline = ((min_lat, mid_lon), (max_lat, mid_lon))
+    horizontal_centerline = ((mid_lat, min_lon), (mid_lat, max_lon))
+    return {
+        "bbox": bbox,
+        "width_m": width_m,
+        "height_m": height_m,
+        "area_m2": area_m2,
+        "center_point": center,
+        "vertical_centerline": vertical_centerline,
+        "horizontal_centerline": horizontal_centerline
+    }
+
 #%% Code testing.
 if __name__ == "__main__":
     #import os
