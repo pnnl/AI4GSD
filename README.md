@@ -49,7 +49,7 @@ The users can follow the description in each Jupyter Notebook to run the model s
 @misc{Chen2025,
 address = {Richland, WA, USA},
 author = {Chen, Yunxiang},
-title = {{AI4GSD: An end-to-end vision AI tool to map sediment grain size distribution from drone and smartphone photos and videos}},
+title = {{AI4GSD: an end-to-end vision AI tool to map sediment grain size distribution from drone and smartphone photos and videos}},
 url = {https://github.com/pnnl/AI4GSD },
 year = {2025}
 }
