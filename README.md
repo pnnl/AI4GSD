@@ -1,5 +1,5 @@
 # AI4GSD
-An end-to-end vision AI tool to map sediment grain size distribution from drone and smartphone photos and videos.
+An end-to-end vision AI toolkit to map sediment grain size distribution from drone and smartphone photos and videos.
 
 ## Introduction
 AI4GSD is a computer vision AI tool for automated grain size mapping from videos and photos acquired by drones and smartphones. This tool has been proven to provide highly accurate results for estimating photo resolution (NSE=0.999, mean percent error (MPE) = -0.05%, mean absolute percent error (MAPE) = 0.65%) and median grain size (NSE=0.984, MPE= 0.77%, MAPE=3.50%) for both drone and smartphone images. Per camera type, the accuracy is 0.995, 1.26%, and 2.85% in terms of NSE, MPE, and MAPE for drone images, while the corresponding values are 0.979, 0.34%, and 4.09% for smartphone images. This tool also demonstrates an accuracy of -7.59% and 1.17% when compared to a tutorial example in BaseGrain and field observation data reported in the literature. For each input image, this tool uses three AI models, i.e., Scale AI, Anthro AI, and Grain AI, to detect pixel sizes of reference scales, anthropogenic objects, and individual grains, respectively. The reference scale pixel sizes are then converted to photo resolution (mm/pixel) based on user-defined reference scale sizes. The region occupied by the anthropogenic objects is cropped out as non-grain regions. The pixel sizes of individual grains are converted to real size by multiplying their pixel sizes by the photo resolution. Each photo typically detects hundreds to thousands of grains. Such data is then used to generate a grain size distribution based on count or area weight of each grain. Characteristic grain sizes such as D10, D50, D60, and D84 are then computed from the grain size distribution curve. Such statistical data are output to standard formats for all photos. The tool also outputs the overlay of the AI-predicted reference scale, anthropogenic objects, and individual grains on the raw image for each photo for the user's further analysis. The tool also demonstrates a good computational efficiency, with an average processing time of 2 seconds per frame when figure output is disabled. Interested users are suggested to test relevant functions using the Jupyter Notebook examples.
@@ -49,7 +49,7 @@ The users can follow the description in each Jupyter Notebook to run the model s
 @misc{Chen2025,
 address = {Richland, WA, USA},
 author = {Chen, Yunxiang},
-title = {{AI4GSD: an end-to-end vision AI tool to map sediment grain size distribution from drone and smartphone photos and videos}},
+title = {{AI4GSD: an end-to-end vision AI toolkit to map sediment grain size distribution from drone and smartphone photos and videos}},
 url = {https://github.com/pnnl/AI4GSD },
 year = {2025}
 }
