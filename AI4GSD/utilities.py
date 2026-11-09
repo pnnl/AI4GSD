@@ -205,7 +205,7 @@ class parameters:
         'SaveVTK': False,
         'SaveVTKRatio': 1,
         'SaveVTKName': 'diagonal_m',
-        'SaveVTKNameShow': '\log_2(D_i^r) (mm)',
+        'SaveVTKNameShow': r'\log_2(D_i^r) (mm)',
         'SaveVTKCmap': 'plasma',
         'SaveVTKAlpha': 0.5,
         'SaveVTKFontSize': 12,   
