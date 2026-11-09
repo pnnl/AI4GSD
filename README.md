@@ -20,9 +20,11 @@ Chen, Y., Bao, J., Chen, R., Li, B., Yang, Y., Renteria, L., et al. (2024). Quan
 
 Chen Y ; Bao J ; Chen Y ; Li B ; Yang Y ; Stegen J C ; Renteria L ; Delgado D ; Forbes B ; Goldman A E ; Simhan M ; Barnes M ; Laan M ; McKever S A ; Hou Z ; Chen X ; Scheibe T D (2023): Artificial intelligence models, photos, and data associated with the manuscript “Quantifying Streambed Grain Size, Uncertainty, and Hydrobiogeochemical Parameters Using Machine Learning Model YOLO” (v2). River Corridor and Watershed Biogeochemistry SFA, ESS-DIVE repository. Dataset. https://doi.org/10.15485/1999774
 
-## Run the Demos with Jupyter Notebook
+## Run the Code
 
-Please follow the steps in [Install.md](Install.md) to install AI4GSD before running the demos.
+### Option 1: Jupyter Notebook
+
+Follow the steps in [Install.md](Install.md) to install AI4GSD before running the demos.
 
 Open [Demo_JupyterNotebook](Demo_JupyterNotebook), select a notebook, and follow its instructions. Example data are provided in [Demo_Data](Demo_Data).
 
@@ -33,7 +35,7 @@ Open [Demo_JupyterNotebook](Demo_JupyterNotebook), select a notebook, and follow
 * [Demo 5: BaseGrain Validation](Demo_JupyterNotebook/Demo5_FieldValidation_BaseGrainExample.ipynb) — Validate AI predictions against the BaseGrain tutorial example.
 * [Demo 6: Mair (2024) Site K1 Validation](Demo_JupyterNotebook/Demo6_FieldValidation_Mair2024SiteK1.ipynb) — Validate AI predictions against published field measurements from Site K1.
 
-## Run the Demos with Google Colab
+### Option 2: Google Colab
 
 Open a demo using the links below and run its cells in order. Each notebook includes instructions for installing packages and downloading the code and required data.
 
@@ -44,9 +46,9 @@ Open a demo using the links below and run its cells in order. Each notebook incl
 * [Demo 5: BaseGrain Validation](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo5_FieldValidation_BaseGrainExample.ipynb) — Validate AI predictions against the BaseGrain tutorial example.
 * [Demo 6: Mair (2024) Site K1 Validation](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo6_FieldValidation_Mair2024SiteK1.ipynb) — Validate AI predictions against published field measurements from Site K1.
 
-## Run the Demos with Spyder
+### Option 3: Spyder
 
-Please follow the steps in [Install.md](Install.md) to install AI4GSD before running the demos.
+Follow the steps in [Install.md](Install.md) to install AI4GSD before running the demos.
 
 Export one of the notebooks below as a Python script (`.py`), then open it in Spyder. Run any package installation commands in your Anaconda prompt. Example data are provided in [Demo_Data](Demo_Data).
 
