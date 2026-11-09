@@ -28,7 +28,7 @@ from pathlib import Path
 from natsort import natsorted
 from shapely.geometry import box                                               # Computing union area.
 from shapely.ops import unary_union
-from .ultilities import agent, defaultResults                                  # User-defined package.
+from .utilities import agent, defaultResults                                   # User-defined package.
 from .mathm import getFiles, ecdfm, center2corners
 from .mathm import __file__ as mathm_path
 #from memory_profiler import profile                                           # Only for memeory analysis.
@@ -92,20 +92,32 @@ def Photo2GSDSingle(PP):
     conf0 = PP.ConfidenceThresholdYOLO                                         # Default YOLO confidence threshold.
     conf1 = PP.ConfidenceThresholdUser                                         # User confidence threshold.
     iou = PP.YOLOIOU                                                           # Default YOLO iou.
+    segboarderthickness = PP.SegmentationOverlayBoarderThickness
     usemask = PP.UseMask                                                       # Control if using Anthro filter mask.
+    manualsegflag = PP.SegmentationFromManualFlag
+    segfrommanual = PP.SegmentationFromManual
     gsdflag = PP.GSDFlag
     overlap_photo = PP.GrainBackgrouondOverlapThreshold              
     overlap_grain = PP.InvividualGrainBackgrouondOverlapThreshold
     segalpha = float(PP.SegmentationOverlayTransparency)                       # Transparency of segementation.
+    segalpha2 = float(PP.SegmentationOverlayGroundTruthTransparency)
+    bdalpha = float(PP.SegmentationOverlayBorderTransparency)
     line_color1_rgb = PP.SaveOverlayGrainColor                     
     line_color2_rgb = PP.SaveOverlayScaleColor                    
-    line_color3_rgb = PP.SaveOverlayBackgroundColor                      
+    line_color3_rgb = PP.SaveOverlayBackgroundColor   
+    line_color4_rgb = PP.SaveOverlayManualBackgroundColor
     grainfolder = PP.GrainAIPredictionSaveFolderName
     outYOLOFolderBeforeOld = PP.UserYOLOFolder
     notfromdata = outYOLOFolderBeforeOld == ''
     szmax = PP.MaximumGrainSize                                                # Remove grains larger than this.
     szmin = PP.MinimumGrainSize                                                # Remove grains smaller than this.
-    
+    cutw = PP.CutWidthRatio
+    cuth = PP.CutHeightRatio
+    cutmethod = PP.CutGrainSizeMethod
+    line_color5_rgb = PP.SaveOverlayCutBoundaryColor                           # Color for cut boundary overlay.
+    cutalpha= PP.SaveOverlayCutBoundaryColorAlpha                            
+    clw = max(1, int(round(PP.SaveOverlayCutBoundaryEdgeThickness)))
+
     # Update model name if using existing data, which may not come from a model.
     model_name += ".0.0" if len(model_name.split('.')) == 1 else ""
     
@@ -276,7 +288,7 @@ def Photo2GSDSingle(PP):
         # First write of the data.
         first_write = True
         if PP.SaveStatisticsData: open(outGSDName, "w").close()
-        #files = files[1:2]
+        #files = files[0:1]
         for i in range(len(files)):
             ts = time.time()
             # Get photo name, parent name, and extension.                     #
@@ -362,14 +374,18 @@ def Photo2GSDSingle(PP):
                     print(formatSpec11 %(model_name_source))
                     labels_yolo_old = np.loadtxt(YOLOOld)                      # Loading existing YOLO data.
                     nrn = labels_yolo_old.shape[0]
+                    ncn = labels_yolo_old.shape[1]
                     nra = nrn
-                    obj_score_output_old = \
-                        np.stack((labels_yolo_old[:,0],np.ones(nrn)),axis=1)   # Setup defualt confidence score as 1.
-                    
+                    if ncn<6:
+                        obj_score_output_old = np.stack((labels_yolo_old[:,0],
+                                                         np.ones(nrn)),axis=1) # Setup defualt confidence score as 1.
+                    else: 
+                        obj_score_output_old = labels_yolo_old[:,[0,5]]        # Loading predicted score if existed.
+                        
                     # Loading confidence socre if exists.
                     if os.path.isfile(YOLOOldScore):
                         obj_score_output_old = np.loadtxt(YOLOOldScore)        # Upadting score if existed.
-                    
+                        
                     obj_score = obj_score_output_old[:,1]
                     obj_id = obj_score_output_old[:,0]
                     obj_x = labels_yolo_old[:,1]*sw
@@ -504,6 +520,15 @@ def Photo2GSDSingle(PP):
                             obj_h = obj_px[:,3] - obj_px[:,1]
                             del obj_values
                             
+                # Conversion factor from pixel to real size.         
+                ares = abs(resolution)
+                szmax_corrector = 1
+                szmin_corrector = 1
+                if PP.MaximumGrainSizeUnit.lower() == 'pixel':
+                    szmax_corrector = ares
+                if PP.MinimumGrainSizeUnit.lower() == 'pixel':
+                    szmin_corrector = ares
+                    
                 # Further calculation of other information based on xywh and p.
                 pp00, pp0, pps = [zmax]*3
                 nrn, nrs = [0]*2
@@ -546,7 +571,7 @@ def Photo2GSDSingle(PP):
                             tfx = mask_sum<=overlap_grain*area_px              # Ratio of mask2object.
                         del mask_sum
 
-                        # Filterning data if existing.
+                        # Filtering data if existing.
                         obj_score = obj_score[tfx]
                         labels_r = labels_r[tfx,:]
                         area_r = area_r[tfx]
@@ -565,17 +590,24 @@ def Photo2GSDSingle(PP):
                         
                     # Selecting only data larger than thersold.
                     whr = {"w": 3, "h": 4, "r": 5}
-                    cutmethod = PP.CutGrainSizeMethod
                     idcs = [whr[ch] for ch in cutmethod if ch in whr]
                     tf0 = obj_score >= conf1
                     for idc in idcs:
-                        tf0 = tf0 & (labels_r[:,idc]<= szmax) & (labels_r[:,idc]>= szmin)
+                        tf0 = tf0 & (labels_r[:,idc]<= szmax*szmax_corrector) \
+                        & (labels_r[:,idc]>= szmin*szmin_corrector)
                         
-                    labels_r = labels_r[tf0,:]
-                    area_r = area_r[tf0]
-                    labels_yolo_threshold = labels_yolo[tf0,:]
-                    obj_px0 = obj_px[tf0,:].astype(int)
+                    # Remove objects outside cut off region.
+                    tf1 = (labels_r[:,1]/ares/sw>=cutw) & \
+                        (labels_r[:,1]/ares/sw<=1-cutw) & \
+                        (labels_r[:,2]/ares/sh>=cuth) & \
+                        (labels_r[:,2]/ares/sh<=1-cuth) 
                     
+                    # Final selected objects.
+                    tf2 = tf0 & tf1
+                    labels_r = labels_r[tf2,:]
+                    area_r = area_r[tf2]
+                    labels_yolo_threshold = labels_yolo[tf2,:]
+                    obj_px0 = obj_px[tf2,:].astype(int)
                     nrs = labels_r.shape[0]                                    # Number of objects after thresholding.
             
                 # Define characteristic percents and output variable name 1.
@@ -770,7 +802,11 @@ def Photo2GSDSingle(PP):
                 dpi_overlay = PP.SaveOverlayResolution
                 dot_r = PP.SaveOverlayScaleDotSize
                 dot_c = PP.SaveOverlayScaleDotColor
-                if PP.SaveFigure and PP.SaveOverlayLabel and nrs>= 2:
+                #mask02 = []
+                mask02 = None
+                segFolderManual = segFolder + '_' + manualsegflag 
+                outMaskManual = WorkDir + os.sep + segFolderManual + os.sep + stem + '.tif'
+                if PP.SaveFigure and PP.SaveOverlayLabel:
                     if not fig_show:
                         useagg = True
                         matplotlib.use("Agg")
@@ -792,17 +828,18 @@ def Photo2GSDSingle(PP):
                     # Color: green (0,255,0); blue (0,0,255); red (255,0,0); whilte (255,255,255)
                     lc1_bgr = tuple(reversed(line_color1_rgb))                 # Convert to bgr.
                     plt.figure(1)
-                    for bbox in obj_px0:                                       # For sediments.
-                        x1, y1, x2, y2 = bbox
-                        cv2.rectangle(imgi, (x1, y1), (x2, y2),lc1_bgr,llw)
-
+                    if PP.SaveOverlayLabelGrain:
+                        for bbox in obj_px0:                                   # For sediments.
+                            x1, y1, x2, y2 = bbox
+                            cv2.rectangle(imgi, (x1, y1), (x2, y2),lc1_bgr,llw)
+                            
                     # For scale overlay. 
                     lc2_bgr = tuple(reversed(line_color2_rgb))         # In bgr.
                     L1 = ['L1_px1_pixel','L1_py1_pixel','L1_px2_pixel','L1_py2_pixel']
                     L2 = ['L2_px1_pixel','L2_py1_pixel','L2_px2_pixel','L2_py2_pixel']
                     box12 = scales_i[L1+L2].to_numpy().astype(int)
                     box12 = box12[box12>0]
-                    if len(box12)>0:
+                    if len(box12)>0 and PP.SaveOverlayLabelScale:
                         obj_pxs = box12.reshape((4,-1),order='F').T            # Scale bounding box.
                         for bbox in obj_pxs:                                   # For scales.
                             x1, y1, x2, y2 = bbox
@@ -815,13 +852,50 @@ def Photo2GSDSingle(PP):
                                 if len(mask01)>0: mask01[y1:y2,x1:x2] = 0      # Removing scale from mask.
                         del obj_pxs
                         
+                    # Loading manual segmentation data if available.
+                    if os.path.isfile(outMaskManual) and usemask and segfrommanual:
+                        mask02 = cv2.imread(outMaskManual, cv2.IMREAD_GRAYSCALE)
+                        mask02 = (mask02 > 0).astype(np.uint8,copy=False)
+                        if mask02.ndim == 3: mask02 = mask02[:,:,0]
+                        lc4_bgr = tuple(reversed(line_color4_rgb))             # In bgr.
+                        imgi[mask02 ==1] = ((1-segalpha2) * np.array(lc4_bgr, dtype=np.uint8) + 
+                                             segalpha2 * imgi[mask02 == 1] ).astype(np.uint8)
+                        kernel = np.ones((3, 3), np.uint8)
+                        mask_u8 = (mask02.astype(np.uint8))                    # ensure 0/1 uint8
+                        eroded = cv2.erode(mask_u8, kernel, iterations=segboarderthickness)
+                        border = (mask_u8 - eroded)  
+                        bidx = border > 0
+                        imgi[bidx] = ((1 - bdalpha) * np.array(lc4_bgr, dtype=np.float32) +
+                                      bdalpha* imgi[bidx].astype(np.float32)).astype(np.uint8)
+                        if not PP.SaveOverlayAll: del mask02
+                        
                     # Plotting overlay for segmented regions.
-                    if len(mask01)>0:
+                    if len(mask01)>0 and PP.SaveOverlayLabelSegmentation:
                         lc3_bgr = tuple(reversed(line_color3_rgb))             # In bgr.
                         imgi[mask01 ==1] = ((1-segalpha) * np.array(lc3_bgr, dtype=np.uint8) + 
                                              segalpha * imgi[mask01 == 1] ).astype(np.uint8)
+                        kernel = np.ones((3, 3), np.uint8)
+                        mask_u8 = (mask01.astype(np.uint8))                    # ensure 0/1 uint8
+                        eroded = cv2.erode(mask_u8, kernel, iterations=segboarderthickness)
+                        border = (mask_u8 - eroded)  
+                        bidx = border > 0
+                        imgi[bidx] = ((1 - bdalpha) * np.array(lc3_bgr, dtype=np.float32) +
+                                      bdalpha* imgi[bidx].astype(np.float32)).astype(np.uint8)
                         if not PP.SaveOverlayAll: del mask01
-                                                
+                    
+                    # Plot cutw and cuth boundary lines on the image
+                    if PP.OverlayCutBoundary and not (cuth==0 and cutw==0):
+                        lc5_bgr = tuple(reversed(line_color5_rgb))             # In bgr.
+                        clt = cv2.LINE_AA
+                        x1 = int(round(cutw * sw))
+                        y1 = int(round(cuth * sh))
+                        x2 = int(round((1 - cutw) * sw))
+                        y2 = int(round((1 - cuth) * sh))
+                        overlay_i = imgi.copy()
+                        cv2.rectangle(overlay_i, (x1, y1), (x2, y2), lc5_bgr, clw, lineType=clt)
+                        imgi = cv2.addWeighted(overlay_i, cutalpha, imgi, 1 - cutalpha, 0)
+                        del overlay_i
+
                     plt.imshow(cv2.cvtColor(imgi, cv2.COLOR_BGR2RGB))
                     plt.axis("off")
                     plt.gca().set_aspect('equal', adjustable='box')
@@ -932,7 +1006,7 @@ def Photo2GSDSingle(PP):
                     ml = PP.OverlayGSDTickMarkLength*beta
                     ftc = PP.OverlayFontColor
                     fftc = PP.OverlayFontColorForeground
-                    pad_inches = 0.01
+                    pad_inches = 0
                     
                     # Prepare data.
                     xc = [xcw, xch, xcr, xaw, xah, xar]
@@ -961,6 +1035,27 @@ def Photo2GSDSingle(PP):
                         whra[:,2] = np.sqrt(whra[:,0]**2 + whra[:,1] **2)
                         whra[:,3] = whra[:,0] * whra[:,1] 
                         nrm = whra.shape[0]
+
+                        # Remove objects whose size is outside the specified range.
+                        whr = {"w": 0, "h": 1, "r": 2}
+                        idcs = [whr[ch] for ch in cutmethod if ch in whr]
+                        tf0 = whra[:,0] >0 
+
+                        for idc in idcs:
+                            tf0 = tf0 & (whra[:,idc]<= szmax*szmax_corrector) \
+                            & (whra[:,idc]>= szmin*szmin_corrector)
+                            
+                        # Remove objects outside cut off region.
+                        tf1 = (lbs[:,1]>=cutw) & \
+                            (lbs[:,1]<=1-cutw) & \
+                            (lbs[:,2]>=cuth) & \
+                            (lbs[:,2]<=1-cuth) 
+                        
+                        # Final selected objects.
+                        tf2 = tf0 & tf1
+                        whra = whra[tf2,:]
+                        nrm = whra.shape[0]
+
                         fcw,xcw,_ = ecdfm(whra[:,0])
                         faw,xaw,_ = ecdfm(whra[:,[0,3]],'byarea')
                         fch,xch,_ = ecdfm(whra[:,1])
@@ -1027,7 +1122,7 @@ def Photo2GSDSingle(PP):
                     # For sediment overlay.
                     # Color: green (0,255,0); blue (0,0,255); red (255,0,0); whilte (255,255,255)
                     lc1_bgr = tuple(reversed(line_color1_rgb))                 # Convert to bgr.
-                    if PP.SaveOverlayGrain:
+                    if PP.SaveOverlayAllGrain:
                         for bbox in obj_px0:                                   # For sediments.
                             x1, y1, x2, y2 = bbox
                             cv2.rectangle(imgi, (x1, y1), (x2, y2),lc1_bgr,llw)
@@ -1038,7 +1133,7 @@ def Photo2GSDSingle(PP):
                     L2 = ['L2_px1_pixel','L2_py1_pixel','L2_px2_pixel','L2_py2_pixel']
                     box12 = scales_i[L1+L2].to_numpy().astype(int)
                     box12 = box12[box12>0]
-                    if PP.SaveOverlayScale:
+                    if PP.SaveOverlayAllScale:
                         if len(box12)>0:
                             obj_pxs = box12.reshape((4,-1),order='F').T        # Scale bounding box.
                             for bbox in obj_pxs:                               # For scales.
@@ -1054,13 +1149,52 @@ def Photo2GSDSingle(PP):
                             
                     # Plotting overlay for segmented regions.
                     lc3_bgr = tuple(reversed(line_color3_rgb))                 # In bgr.
-                    if PP.SaveOverlaySegmentation:
+                    lc4_bgr = tuple(reversed(line_color4_rgb))                
+                    if PP.SaveOverlayAllSegmentation:
+                        #if len(mask02)==0 and segfrommanual and os.path.isfile(outMaskManual):
+                        if mask02 is None and segfrommanual and os.path.isfile(outMaskManual):
+                            mask02 = cv2.imread(outMaskManual, cv2.IMREAD_GRAYSCALE)
+                            mask02 = (mask02 > 0).astype(np.uint8,copy=False)
+                            if mask02.ndim == 3: mask02 = mask02[:,:,0]
+                            
+                        if mask02 is not None:
+                            imgi[mask02 ==1] = ((1-segalpha2) * np.array(lc4_bgr, dtype=np.uint8) + 
+                                                 segalpha2 * imgi[mask02 == 1] ).astype(np.uint8)
+                            kernel = np.ones((3, 3), np.uint8)
+                            mask_u8 = (mask02.astype(np.uint8))                    # ensure 0/1 uint8
+                            eroded = cv2.erode(mask_u8, kernel, iterations=segboarderthickness)
+                            border = (mask_u8 - eroded)  
+                            bidx = border > 0
+                            imgi[bidx] = ((1 - bdalpha) * np.array(lc4_bgr, dtype=np.float32) +
+                                          bdalpha* imgi[bidx].astype(np.float32)).astype(np.uint8)
+                            del mask02
+                            
                         if len(mask01)>0:
                             imgi[mask01 ==1] = ((1-segalpha) * np.array(lc3_bgr, dtype=np.uint8) + 
                                                  segalpha * imgi[mask01 == 1] ).astype(np.uint8)
+                            kernel = np.ones((3, 3), np.uint8)
+                            mask_u8 = (mask01.astype(np.uint8))                # ensure 0/1 uint8
+                            eroded = cv2.erode(mask_u8, kernel, iterations=segboarderthickness)
+                            border = (mask_u8 - eroded)  
+                            bidx = border > 0
+                            imgi[bidx] = ((1 - bdalpha) * np.array(lc3_bgr, dtype=np.float32) +
+                                          bdalpha* imgi[bidx].astype(np.float32)).astype(np.uint8)
                             del mask01
+
+                    # Plot cutw and cuth boundary lines on the image
+                    if PP.OverlayCutBoundary and not (cuth==0 and cutw==0):
+                        lc5_bgr = tuple(reversed(line_color5_rgb))             # In bgr.
+                        clt = cv2.LINE_AA
+                        x1 = int(round(cutw * sw))
+                        y1 = int(round(cuth * sh))
+                        x2 = int(round((1 - cutw) * sw))
+                        y2 = int(round((1 - cuth) * sh))
+                        overlay_i = imgi.copy()
+                        cv2.rectangle(overlay_i, (x1, y1), (x2, y2), lc5_bgr, clw, lineType=clt)
+                        imgi = cv2.addWeighted(overlay_i, cutalpha, imgi, 1 - cutalpha, 0)
+                        del overlay_i   
                     ###########################################################
-                    
+
                     # Create figure.
                     #fig, ax = plt.subplots(num=5, clear=True,figsize=(fig_w, fig_h),dpi=dpi_overlay)   
                     fig, ax = plt.subplots(num=5, clear=True)   
@@ -1217,6 +1351,7 @@ def Photo2GSDSingle(PP):
                                         
                     # Adjust the overal xlabel and ylabel.
                     if PP.SaveOverlayGSD or PP.SaveOverlayField:
+                        pad_inches = 0.01
                         nx = PP.OverlayGSDXTickNumber                          # Number of xticks.
                         ny = PP.OverlayGSDYTickNumber                          # Number of yticks.
                         ax.set_xlim(xmin, xmax)

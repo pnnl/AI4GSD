@@ -22,10 +22,11 @@
 #%% Required package.
 import numpy as np
 import pandas as pd
-import os, cv2, json, math, shutil, random
+import os, cv2, json, math, shutil, random, torch
 from pathlib import Path
 from natsort import natsorted
 from collections import defaultdict
+from PIL import Image
 from .mathm import getFiles, ecdfm
 
 #%% Converting YOLO.prediction result to mask.
@@ -100,6 +101,177 @@ def yolo2json(res,outFileName=''):
         with open(outFileName, "w", encoding="utf-8") as jf:
             json.dump(js_data, jf, ensure_ascii=False, indent=2)   
     return js_data
+
+#%% Converting YOLO generated segmentation labels to json/tif format.
+def yolo2result(imgpath):
+    """
+    Build a fake Ultralytics-style `res` object from:
+      - image file (imgpath)
+      - YOLO segmentation txt: same folder, same stem + '.txt'
+      - classes.txt: same folder, one class name per line (optional)
+
+    Behavior:
+      - If txt file is missing -> FileNotFoundError.
+      - If classes.txt is missing -> use numeric class names ('0','1',...).
+
+    Returns:
+        res  (with attributes: path, orig_shape, masks, boxes, names)
+    """
+    
+    # Local paths.
+    dir_img = os.path.dirname(imgpath)
+    base    = os.path.splitext(os.path.basename(imgpath))[0]  # stem
+    txtpath = os.path.join(dir_img, base + '.txt')
+    clspath = os.path.join(dir_img, 'classes.txt')
+
+    # Data check.
+    if not os.path.isfile(txtpath):
+        raise FileNotFoundError(
+            f"YOLO segmentation txt not found for image:\n"
+            f"  img: {imgpath}\n"
+            f"  txt: {txtpath}")
+        
+    # classes.txt is optional; if missing, we use numeric labels.
+    names = None
+    if os.path.isfile(clspath):
+        with open(clspath, 'r', encoding='utf-8') as f:
+            cls_list = [line.strip() for line in f if line.strip()]            # {0: name0, 1: name1, ...}
+        names = {i: name for i, name in enumerate(cls_list)}
+        
+    # inner helpers & fake result classes
+    class FakeMasks:
+        """Mimics ultralytics res.masks."""
+        def __init__(self, masks_np, polys_px):
+            self.data = torch.from_numpy(masks_np.astype(bool))
+            self.xy   = [np.array(poly, dtype=float) for poly in polys_px]
+            
+    class FakeBoxes:
+        """Mimics ultralytics res.boxes."""
+        def __init__(self, cls_ids):
+            self.cls = torch.tensor(cls_ids, dtype=torch.int64)
+            
+    class FakeResult:
+        """Mimics the parts of ultralytics Result used by your yolo2* functions."""
+        def __init__(self, imgpath, H, W, masks, boxes, names):
+            self.path       = imgpath
+            self.orig_shape = (H, W, 3)                                        # only [:2] used in your code
+            self.masks      = masks
+            self.boxes      = boxes
+            self.names      = names
+
+    def parse_yolo_seg_line(line):
+        """
+        One line of YOLO segmentation txt:
+            class_id x1 y1 x2 y2 ...
+        All coords normalized in [0,1].
+        """
+        parts = line.strip().split()
+        if len(parts) < 3:
+            return None
+
+        cid = int(float(parts[0]))
+        coords = list(map(float, parts[1:]))
+
+        if len(coords) % 2 != 0:
+            raise ValueError(f"Odd number of coordinate values in line: {line}")
+
+        xs = coords[0::2]
+        ys = coords[1::2]
+        poly_norm = list(zip(xs, ys))
+        return cid, poly_norm
+
+    def read_yolo_seg_txt(txtpath):
+        """Read YOLO seg txt into list of {class_id, poly_norm}."""
+        objects = []
+        with open(txtpath, "r") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                parsed = parse_yolo_seg_line(line)
+                if parsed is None:
+                    continue
+                cid, poly_norm = parsed
+                objects.append({"class_id": cid, "poly_norm": poly_norm})
+        return objects
+
+    def build_names_dict(cls_ids, names):
+        """
+        Build contiguous dict 0..max_id for res.names, using:
+          - provided names (dict or list) when possible
+          - fallback 'i' when missing.
+        This keeps yolo2json's indexing safe.
+        """
+        if not cls_ids:
+            if names is None:
+                return {}
+            if isinstance(names, dict):
+                return names.copy()
+            if isinstance(names, (list, tuple)):
+                return {i: n for i, n in enumerate(names)}
+            return {}
+
+        max_id = max(cls_ids)
+        full = {}
+
+        if names is None:
+            for i in range(max_id + 1):
+                full[i] = str(i)
+        elif isinstance(names, dict):
+            for i in range(max_id + 1):
+                full[i] = names.get(i, str(i))
+        elif isinstance(names, (list, tuple)):
+            for i in range(max_id + 1):
+                full[i] = names[i] if i < len(names) else str(i)
+        else:
+            for i in range(max_id + 1):
+                full[i] = str(i)
+
+        return full
+
+    # build fake res from img + txt ----------------
+    # image size
+    img = Image.open(imgpath)
+    W, H = img.size  # width, height
+
+    # polygons from txt
+    objects = read_yolo_seg_txt(txtpath)
+    cls_ids = [obj["class_id"] for obj in objects]
+    names_dict = build_names_dict(cls_ids, names)
+
+    # no objects -> masks=None (works fine with yolo2mask/yolo2json)
+    if not objects:
+        masks = None
+        boxes = FakeBoxes([])
+        res = FakeResult(imgpath, H, W, masks, boxes, names_dict)
+        return res
+
+    masks_list = []
+    polys_px   = []
+
+    for obj in objects:
+        poly_norm = obj["poly_norm"]
+
+        # normalized -> pixel coords
+        poly_px = [(x * W, y * H) for x, y in poly_norm]
+        polys_px.append(poly_px)
+
+        # per-instance mask (for res.masks.data shape)
+        mask = np.zeros((H, W), dtype=np.uint8)
+        poly_int = np.array(
+            [[(int(round(px)), int(round(py))) for px, py in poly_px]],
+            dtype=np.int32
+        )
+        cv2.fillPoly(mask, poly_int, 1)
+        masks_list.append(mask)
+
+    masks_np = np.stack(masks_list, axis=0).astype(bool)  # (n, H, W)
+
+    masks = FakeMasks(masks_np, polys_px)
+    boxes = FakeBoxes(cls_ids)
+    res   = FakeResult(imgpath, H, W, masks, boxes, names_dict)
+    
+    return res
 
 #%%
 def labelCorrectionOld(filename,classid=0, overwrite=False,writefolder='labels_corrected'): 

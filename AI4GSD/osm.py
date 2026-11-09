@@ -20,8 +20,91 @@
 # limitations under the License.                                              #
 
 #%% Required package.
-import os, time
+import os, time, platform, socket, psutil, subprocess
 
+#%% Print computer info.
+def pcinfo():
+    system = platform.system()
+    os_name = f"{system} {platform.release()}"
+    processor = platform.processor() or "Unknown"
+
+    if system == "Windows":
+        import winreg
+
+        try:
+            with winreg.OpenKey(
+                winreg.HKEY_LOCAL_MACHINE,
+                r"SOFTWARE\Microsoft\Windows NT\CurrentVersion"
+            ) as key:
+                product = winreg.QueryValueEx(key, "ProductName")[0]
+                build = int(winreg.QueryValueEx(key, "CurrentBuildNumber")[0])
+
+            if "Windows 10" in product and build >= 22000:
+                product = product.replace("Windows 10", "Windows 11")
+
+            os_name = f"{product} (build {build})"
+        except (OSError, ValueError):
+            pass
+
+        try:
+            with winreg.OpenKey(
+                winreg.HKEY_LOCAL_MACHINE,
+                r"HARDWARE\DESCRIPTION\System\CentralProcessor\0"
+            ) as key:
+                processor = winreg.QueryValueEx(
+                    key, "ProcessorNameString"
+                )[0].strip()
+        except OSError:
+            pass
+
+    elif system == "Linux":
+        try:
+            with open("/etc/os-release", encoding="utf-8") as file:
+                for line in file:
+                    if line.startswith("PRETTY_NAME="):
+                        os_name = line.split("=", 1)[1].strip().strip('"')
+                        break
+        except OSError:
+            pass
+
+        try:
+            with open("/proc/cpuinfo", encoding="utf-8") as file:
+                for line in file:
+                    name, separator, value = line.partition(":")
+                    if separator and name.strip() in ("model name", "Hardware"):
+                        processor = value.strip()
+                        break
+        except OSError:
+            pass
+
+    elif system == "Darwin":
+        os_name = f"macOS {platform.mac_ver()[0]}"
+
+        try:
+            processor = subprocess.check_output(
+                ["sysctl", "-n", "machdep.cpu.brand_string"],
+                text=True,
+                stderr=subprocess.DEVNULL,
+                timeout=5,
+            ).strip() or processor
+        except (OSError, subprocess.SubprocessError):
+            pass
+
+    print(65 * "=")
+    print(f"Machine name: {socket.gethostname()}")
+    print(f"Operating system: {os_name}")
+    print(f"Architecture: {platform.machine()}")
+    print(f"Processor: {processor}")
+
+    try:
+        freq = psutil.cpu_freq()
+        if freq and freq.current > 0:
+            print(f"Reported CPU frequency: {freq.current / 1000:.2f} GHz")
+        else:
+            print("CPU frequency: unavailable")
+    except (OSError, NotImplementedError, RuntimeError):
+        print("CPU frequency: unavailable")
+        
 #%% Get folder and file names from a given path.
 def dirlists(path):
     folders = []

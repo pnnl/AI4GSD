@@ -2,10 +2,12 @@
 An end-to-end vision AI toolkit to map sediment grain size distribution from drone and smartphone photos and videos.
 
 ## Introduction
-AI4GSD is a computer vision AI tool for automated grain size mapping from videos and photos acquired by drones and smartphones. This tool has been proven to provide highly accurate results for estimating photo resolution (NSE=0.999, mean percent error (MPE) = -0.05%, mean absolute percent error (MAPE) = 0.65%) and median grain size (NSE=0.984, MPE= 0.77%, MAPE=3.50%) for both drone and smartphone images. Per camera type, the accuracy is 0.995, 1.26%, and 2.85% in terms of NSE, MPE, and MAPE for drone images, while the corresponding values are 0.979, 0.34%, and 4.09% for smartphone images. This tool also demonstrates an accuracy of -7.59% and 1.17% when compared to a tutorial example in BaseGrain and field observation data reported in the literature. For each input image, this tool uses three AI models, i.e., Scale AI, Anthro AI, and Grain AI, to detect pixel sizes of reference scales, anthropogenic objects, and individual grains, respectively. The reference scale pixel sizes are then converted to photo resolution (mm/pixel) based on user-defined reference scale sizes. The region occupied by the anthropogenic objects is cropped out as non-grain regions. The pixel sizes of individual grains are converted to real size by multiplying their pixel sizes by the photo resolution. Each photo typically detects hundreds to thousands of grains. Such data is then used to generate a grain size distribution based on count or area weight of each grain. Characteristic grain sizes such as D10, D50, D60, and D84 are then computed from the grain size distribution curve. Such statistical data are output to standard formats for all photos. The tool also outputs the overlay of the AI-predicted reference scale, anthropogenic objects, and individual grains on the raw image for each photo for the user's further analysis. The tool also demonstrates a good computational efficiency, with an average processing time of 2 seconds per frame when figure output is disabled. Interested users are suggested to test relevant functions using the Jupyter Notebook examples.
+AI4GSD is a computer-vision tool for automated grain-size mapping from drone- and smartphone-acquired videos and photographs. For each image, it uses three artificial intelligence (AI) models—Scale AI, Anthro AI, and Grain AI—to detect reference scales, anthropogenic objects, and individual grains, respectively. User-provided reference-scale dimensions are used to convert the detected scale pixels to pixel size (mm/pixel). Anthropogenic-object regions are excluded from the grain analysis, and the pixel sizes of individual grains are converted to physical sizes using the pixel size.
+AI4GSD has been evaluated on both drone and smartphone imagery. Across camera types, pixel-size estimates achieved a Nash–Sutcliffe efficiency (NSE) of 0.999, a mean percent error (MPE) of −0.05%, and a mean absolute percent error (MAPE) of 0.65%. For median grain size, the corresponding values were 0.984, 0.77%, and 3.50%. For drone images, median grain-size estimates achieved an NSE of 0.995, an MPE of 1.26%, and a MAPE of 2.85%; for smartphone images, the corresponding values were 0.979, 0.34%, and 4.09%. The tool was also tested against a BaseGrain tutorial example and field-observation data reported in the literature, with reported errors of −7.59% and 1.17%, respectively.
+Each image typically yields hundreds to thousands of grain measurements. These measurements are used to generate grain-size distributions by grain count or area weighting, from which characteristic grain sizes are calculated, including D10, D50, D60, and D84. AI4GSD exports the resulting statistics in standard formats and provides an overlay of the predicted reference scales, anthropogenic objects, and individual grains on each original image for user review. With figure generation disabled, the average processing time is approximately 2 seconds per frame. Users can explore the tool’s functions through the accompanying Jupyter Notebook examples.
 
 ## Funding
-The work is supported by the Program Development Funding from the Physical and Computational Science Directorate (PCSD) of Pacific Northwest National Laboratory (PNNL) and PNNL’s River Corridor Hydrobiogeochemistry Science Focus Area project (https://www.pnnl.gov/projects/river-corridor) funded by US DOE Biological and Environmental Research (BER)
+The work is supported by PNNL’s River Corridor Hydrobiogeochemistry Science Focus Area project (https://www.pnnl.gov/projects/river-corridor) funded by US DOE Biological and Environmental Research (BER)
 
 ## Reference
 Details of the data and model can be found in:
@@ -17,20 +19,10 @@ Chen, Y., Bao, J., Chen, R., Li, B., Yang, Y., Renteria, L., et al. (2024). Quan
 Chen Y ; Bao J ; Chen Y ; Li B ; Yang Y ; Stegen J C ; Renteria L ; Delgado D ; Forbes B ; Goldman A E ; Simhan M ; Barnes M ; Laan M ; McKever S A ; Hou Z ; Chen X ; Scheibe T D (2023): Artificial intelligence models, photos, and data associated with the manuscript “Quantifying Streambed Grain Size, Uncertainty, and Hydrobiogeochemical Parameters Using Machine Learning Model YOLO” (v2). River Corridor and Watershed Biogeochemistry SFA, ESS-DIVE repository. Dataset. https://doi.org/10.15485/1999774
 
 ## Installation
-The following libraries are used, other version of libraries may also work.  
-
-* Python (3.11.13)
-* numpy (2.2.6)
-* pandas (2.3.1)
-* opencv-python (4.12.0)
-* matplotlib (3.10.6)
-* ultralytics (8.3.186)
-* torch (2.9.0+cpu or version fit your CPU/GPU)
-  
-Using different version of numpy and pandas as listed above may cause error.
+Please follow the steps in Install.md to install the software. 
 
 ## Setup system path
-For Windows and Spyder: open Spyder, then go to "Tools>PYTHONPATH manager>add path". Click the "add path (+ marker)", then add the path of the main folder to the system. The main path is a folder which includes "README.MD".
+For Windows and Spyder: open Spyder, then go to "Tools>PYTHONPATH manager>add path". Click the "add path (+ marker)", then add the path of the main folder to the system. The main path is a folder which includes "ReadMe.md".
 
 ## Run the code
 All the codes for the models are in folder AI4GSD. Six Jupyter Notebooks (in Demo_JupyterNotebook) are provided to demonstrate how to use the code. All the necessary data for the demos are in the folder Demo_Data.

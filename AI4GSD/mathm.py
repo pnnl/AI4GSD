@@ -24,6 +24,7 @@ import os, pathlib, math
 import numpy as np
 import pandas as pd
 from natsort import natsorted
+from pyproj import Transformer
 from scipy.interpolate import interp1d, PchipInterpolator, CubicSpline, \
     Akima1DInterpolator
     
@@ -154,6 +155,15 @@ def center2corners(center_xy, wh):
     y2 = center_xy[:, 1] + wh[:, 1] / 2.0
 
     return np.stack([x1, y1, x2, y2], axis=1)
+
+#%% Converting box corners to centers.
+def corners2center(bboxes):
+    xc = (bboxes[:,0] + bboxes[:,2])/2.0
+    yc = (bboxes[:,1] + bboxes[:,3])/2.0
+    w = bboxes[:,2] - bboxes[:,0]
+    h = bboxes[:,3] - bboxes[:,1]
+    
+    return np.stack([xc, yc, w, h], axis=1)
 
 #%% Redefining linspace to be consistant with Matlab.
 def linspace(start,stop, npoints):
@@ -426,9 +436,21 @@ def bboxinfo(lats, lons):
         "horizontal_centerline": horizontal_centerline
     }
 
+#%% Converting between coordinate reference system.                           #
+# Default: EPSG:2856 for NAD83(HARN) / Washington South Meter;                #
+# PSG:4326 - WGS 84 (longitude/latitude).                                     #
+def from_crs(x,y,crs1='EPSG:2856',crs2="EPSG:4326",reverse=False):
+    if reverse:
+        tfm = Transformer.from_crs(crs2, crs1, always_xy=True)
+    else:
+        tfm = Transformer.from_crs(crs1, crs2, always_xy=True)
+    lon, lat = tfm.transform(x, y)
+    
+    return lon, lat
+
 #%% Code testing.
 if __name__ == "__main__":
-    #import os
+    import os
     y1 = np.array([
         [0.2, 0.03],
         [0.1, 0.01],
@@ -438,7 +460,14 @@ if __name__ == "__main__":
     ])
     y2 = np.array([0.2,0.1,0.1,0.3,0.4])
     
-    # # f1,x1,area1 = ecdfm(y1)
+    # y3 = np.array([1,1,1,2,2,3,3,4,5,6,7,8,9])
+
+    # f1,x1,area1 = ecdfm(y3)
+    # print(np.median(y3))
+    # print(np.percentile(y3,50))
+    # dbc = np.interp(0.5,f1,x1)
+    # print(dbc)                        
+    
     # # f2,x2,area2 = ecdfm(y2)
     # # f4,x4,area4 = ecdfm(y1,'byarea')
     # # print(f1,x1,area1)
@@ -491,6 +520,8 @@ if __name__ == "__main__":
     # WorkDir = r'/home/chen200/F/NG/20250627_LR_WalkingPhotoFieldTest/videos'
     # print(getFiles(WorkDir))
     # print(getFilesOld(WorkDir))
+    
+    
     
 
 
