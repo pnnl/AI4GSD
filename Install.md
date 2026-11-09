@@ -38,7 +38,7 @@ python -m pip install numpy==2.2.6 pandas==2.3.1 matplotlib==3.10.6
 ## Step 5: Install additional packages
 
 ```powershell
-python -m pip install natsort pyproj PyExifTool piexif imutils shapely psutil
+python -m pip install natsort pyproj PyExifTool piexif imutils shapely psutil gdown
 ```
 
 ## Step 6: Install PyTorch

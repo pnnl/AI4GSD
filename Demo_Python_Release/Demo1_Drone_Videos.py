@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 CWD = Path(__file__).resolve().parent
 sys.path.insert(0, str(CWD.parent))                                       
-import AI4GSD
+import AI4GSD, gdown
 
 ## Demo of code.
 if __name__ == "__main__":
@@ -12,6 +12,13 @@ if __name__ == "__main__":
     WorkDir = CWD.parent
     PhotoDir = str(WorkDir / 'Demo_Data' / foldername)                         # AI4GSD use string path.
     
+    #%% (1*) Download video file it not already downloaed.
+    videoname = "DJI_0113.MOV"
+    drive_id = "1lKqpHzH5oo1CE3IY-C3au2JKrfx4QaBg"
+    video = Path(PhotoDir) / "videos" / videoname
+    if not video.exists(): 
+        gdown.download(id=drive_id,output=str(video),quiet=False,)
+        
     #%% (1) Extracting or copying your videos/photos to desired folder.
     AI4GSD.getPhotos(PhotoDir,nframe=2000, overwrite=False)                    # Use once.
     
