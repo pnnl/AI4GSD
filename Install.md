@@ -1,55 +1,118 @@
-## Step 0: install Anaconda if you have not installed it.
-Dowmload Anaconda from https://repo.anaconda.com/archive/Anaconda3-2026.07-1-Windows-x86_64.exe
-Double click the downloaded .exe file to install it
+# AI4GSD Installation Guide for Windows
 
-## Step 1: open Anaconda powershell prompt
-Type anaconda Powershell Prompt in Windoers search, and click it.
+Follow these steps to install AI4GSD and launch its Jupyter Notebook demos.
 
-## Step 2: create a new environment for AI4GSD.
+## Step 0: Install Anaconda
+
+Skip this step if Anaconda is already installed.
+
+1. Download the [Anaconda installer for Windows](https://repo.anaconda.com/archive/Anaconda3-2026.07-1-Windows-x86_64.exe).
+2. Double-click the downloaded `.exe` file and follow the installation instructions.
+
+## Step 1: Open Anaconda PowerShell Prompt
+
+Search for **Anaconda PowerShell Prompt** in the Windows Start menu and open it.
+
+Run all commands below in this prompt.
+
+## Step 2: Create an AI4GSD environment
+
+```powershell
 conda create -n ai4gsd python=3.11.13 -y
+```
 
-## Step 3: activate the environment.
+## Step 3: Activate the environment
+
+```powershell
 conda activate ai4gsd
+```
 
-## Step 4: install packages with version requirements.
+Activate this environment whenever you open a new prompt to use AI4GSD.
+
+## Step 4: Install packages with specified versions
+
+```powershell
 python -m pip install numpy==2.2.6 pandas==2.3.1 matplotlib==3.10.6
+```
 
-## Step 5: install packages without version requirements.
+## Step 5: Install additional packages
+
+```powershell
 python -m pip install natsort pyproj PyExifTool piexif imutils shapely psutil
+```
 
-## Step 6: install PyTorch based on hardward.
-### Option A: run on CPU
+## Step 6: Install PyTorch
+
+Choose **one** option based on your hardware. If you are unsure, use **Option A: CPU**.
+
+### Option A: CPU
+
+```powershell
 python -m pip install torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/cpu
+```
 
-### Option B: run on NVIDIA GPU with CUDA 12.1
-#### python -m pip install torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/cu130
+### Option B: NVIDIA GPU — CUDA 12.6 build
 
-### Option C: run on NVIDIA GPU with CUDA 11.8
-#### python -m pip install torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/cu118
+Requires a compatible NVIDIA GPU and driver.
 
-## Step 7: install opencv
+```powershell
+python -m pip install torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/cu126
+```
+
+### Option C: NVIDIA GPU — CUDA 13.0 build
+
+Requires a compatible NVIDIA GPU and driver.
+
+```powershell
+python -m pip install torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/cu130
+```
+
+## Step 7: Install OpenCV
+
+```powershell
 python -m pip install opencv-python==4.12.0.88
+```
 
-## Step 8: install Ultralytics
+## Step 8: Install Ultralytics
+
+```powershell
 python -m pip install ultralytics==8.3.186
+```
 
-## Step 9: install Jupyter Notebook.
-python -m pip install notebook
+## Step 9: Install Jupyter Notebook
+
+Install Jupyter Notebook and register the AI4GSD environment as a notebook kernel.
+
+```powershell
+python -m pip install notebook ipykernel
 python -m ipykernel install --user --name ai4gsd --display-name "Python (ai4gsd)"
+```
 
-## Step 10: verify installation (optional).
-python -c "import numpy,pandas,cv2,matplotlib,ultralytics,torch,torchvision; \
-print('numpy',numpy.__version__); \
-print('pandas',pandas.__version__); \
-print('cv2',cv2.__version__); \
-print('matplotlib',matplotlib.__version__); \
-print('ultralytics',ultralytics.__version__); \
-print('torch',torch.__version__); \
-print('torchvision',torchvision.__version__); \
-print('cuda available:', torch.cuda.is_available())"
+## Step 10: Verify the installation
 
-## Step 11: launch Jupyter Notebook.
-cd to Demo_JupyterNotebook folder, for example: cd D:\AI4GSD\Demo_JupyterNotebook
+Check for dependency conflicts:
+
+```powershell
+python -m pip check
+```
+
+Print the installed package versions and GPU availability:
+
+```powershell
+python -c "import numpy, pandas, cv2, matplotlib, ultralytics, torch, torchvision; print('numpy:', numpy.__version__); print('pandas:', pandas.__version__); print('opencv:', cv2.__version__); print('matplotlib:', matplotlib.__version__); print('ultralytics:', ultralytics.__version__); print('torch:', torch.__version__); print('torchvision:', torchvision.__version__); print('CUDA available:', torch.cuda.is_available())"
+```
+
+For a CPU installation, `CUDA available: False` is expected.
+
+## Step 11: Launch Jupyter Notebook
+
+Navigate to the `Demo_JupyterNotebook` folder inside your AI4GSD directory. For example:
+
+```powershell
+cd D:\NG\AI4GSD\Demo_JupyterNotebook
 jupyter notebook
+```
 
-## End.
+In the browser, open a demo notebook and select **Python (ai4gsd)** as its kernel.
+
+You are now ready to run the AI4GSD demos.
