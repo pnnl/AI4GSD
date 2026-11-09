@@ -117,7 +117,8 @@ def Photo2GSDSingle(PP):
     line_color5_rgb = PP.SaveOverlayCutBoundaryColor                           # Color for cut boundary overlay.
     cutalpha= PP.SaveOverlayCutBoundaryColorAlpha                            
     clw = max(1, int(round(PP.SaveOverlayCutBoundaryEdgeThickness)))
-
+    fontname = getattr(PP, 'FontName', None) or 'Times New Roman'
+    
     # Update model name if using existing data, which may not come from a model.
     model_name += ".0.0" if len(model_name.split('.')) == 1 else ""
     
@@ -813,7 +814,7 @@ def Photo2GSDSingle(PP):
                     from matplotlib import pyplot as plt
                     plt.rcParams.update({
                         'font.family': 'serif',
-                        'font.serif': ['Times New Roman'],
+                        'font.serif': [fontname, 'DejaVu Serif'],
                         'mathtext.fontset': 'stix',
                         'pdf.fonttype': 42,
                         'svg.fonttype': 'none',
@@ -910,7 +911,7 @@ def Photo2GSDSingle(PP):
                     from matplotlib import pyplot as plt
                     plt.rcParams.update({
                         'font.family': 'serif',
-                        'font.serif': ['Times New Roman'],
+                        'font.serif': [fontname, 'DejaVu Serif'],
                         'mathtext.fontset': 'stix',
                         'pdf.fonttype': 42,
                         'svg.fonttype': 'none',
@@ -976,7 +977,7 @@ def Photo2GSDSingle(PP):
                     import matplotlib.patheffects as pe
                     plt.rcParams.update({
                         'font.family': 'serif',
-                        'font.serif': ['Times New Roman'],
+                        'font.serif': [fontname, 'DejaVu Serif'],
                         'mathtext.fontset': 'stix',
                         'pdf.fonttype': 42,
                         'svg.fonttype': 'none',

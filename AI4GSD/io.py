@@ -292,6 +292,16 @@ def readEXIFPhoto(img_path: str, zmax=-9999) -> dict:
                 info['GPSInfo'] = None
     return info
 
+#%% Parsing a UTC offset (e.g., +08:00, -0600, +01:00) at the end of a string.
+_OFFSET_RE = re.compile(r'\s*([+-])(\d{2}):?(\d{2})$')
+def _parseUTCOffset(s) -> timedelta:
+    """Return the trailing UTC offset of a date string as timedelta (0 if none)."""
+    m = _OFFSET_RE.search(str(s)) if s else None
+    if not m:
+        return timedelta(0)
+    sign = 1 if m.group(1) == '+' else -1
+    return sign * timedelta(hours=int(m.group(2)), minutes=int(m.group(3)))
+
 #%% Extracting the EXIF information of a video.
 def readEXIFVideo(video_path: str, zmax=-9999) -> dict:
     """
@@ -369,21 +379,26 @@ def readEXIFVideo(video_path: str, zmax=-9999) -> dict:
         if 'dji' in video_path.lower():
             info['Make'] = 'DJI'
             info['Model'] = 'FC3411'
-            dt_str = md.get('QuickTime:CreateDate')
+            dt_str = md.get('QuickTime:CreateDate')                            # UTC.
             dt_mod = md.get('File:FileModifyDate')
-            dt_off = int(dt_mod.split('-')[1].split(':')[0])
+            dt_off = _parseUTCOffset(dt_mod)                                   # Local = UTC + offset.
         else:
-            dt_str = md.get('QuickTime:CreationDate')
-            dt_str = dt_str[:-6]
-            dt_off = 0
+            dt_str = md.get('QuickTime:CreationDate') or \
+                md.get('QuickTime:CreateDate') or md.get('File:FileModifyDate')
+            dt_str = _OFFSET_RE.sub('', str(dt_str)) if dt_str else None       # Already local time.
+            dt_off = timedelta(0)
             
         # Converting datestr to obj.
-        if 'T' in dt_str:
-            dt_obj = datetime.fromisoformat(dt_str.rstrip('Z'))
-        else:
-            dt_obj = datetime.strptime(dt_str, '%Y:%m:%d %H:%M:%S')
-        dt_obj = dt_obj - timedelta(hours=dt_off)                              # Ajusting time to local time.
-        info['DateTime'] = dt_obj    
+        if dt_str:
+            dt_str = str(dt_str).strip()
+            try:
+                if 'T' in dt_str:
+                    dt_obj = datetime.fromisoformat(dt_str.rstrip('Z'))
+                else:
+                    dt_obj = datetime.strptime(dt_str[:19], '%Y:%m:%d %H:%M:%S')
+                info['DateTime'] = dt_obj + dt_off                             # Ajusting time to local time.
+            except ValueError:
+                info['DateTime'] = None
         
         # GPSInfo
         gps = {}

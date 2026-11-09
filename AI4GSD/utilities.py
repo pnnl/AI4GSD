@@ -21,7 +21,7 @@
 
 #%% Required package.
 import os, copy, time, platform, glob, fnmatch, cv2, piexif, shutil, requests,\
-    logging,  math, imutils, json
+    logging,  math, json
 from datetime import datetime, timedelta
 import pandas as pd
 import numpy as np
@@ -218,6 +218,7 @@ class parameters:
         'ZeroReplacedBy':'Z',
         'VideoTimeMode':'first',                                               # Which time to use as video metadata time (first or last).
         'BoundaryTheresholdPixelNumber': 10,                                   # Remove objects whoes bounding box is within threshold pixel range to boundary.
+        'FontName': 'Times New Roman',
         }
         
     # Define default parameters and overwrite vlaues if provided by users.
