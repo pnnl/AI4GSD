@@ -20,23 +20,42 @@ Chen, Y., Bao, J., Chen, R., Li, B., Yang, Y., Renteria, L., et al. (2024). Quan
 
 Chen Y ; Bao J ; Chen Y ; Li B ; Yang Y ; Stegen J C ; Renteria L ; Delgado D ; Forbes B ; Goldman A E ; Simhan M ; Barnes M ; Laan M ; McKever S A ; Hou Z ; Chen X ; Scheibe T D (2023): Artificial intelligence models, photos, and data associated with the manuscript “Quantifying Streambed Grain Size, Uncertainty, and Hydrobiogeochemical Parameters Using Machine Learning Model YOLO” (v2). River Corridor and Watershed Biogeochemistry SFA, ESS-DIVE repository. Dataset. https://doi.org/10.15485/1999774
 
-## Installation
-Please follow the steps in [Install.md](Install.md) to install the software.
+## Run the Demos with Jupyter Notebook
 
-## Setup system path
-For Windows and Spyder: open Spyder, then go to "Tools>PYTHONPATH manager>add path". Click the "add path (+ marker)", then add the path of the main folder to the system. The main path is a folder which includes "ReadMe.md".
+Please follow the steps in [Install.md](Install.md) to install AI4GSD before running the demos.
 
-## Run the code
-All the codes for the models are in folder AI4GSD. Six Jupyter Notebooks (in Demo_JupyterNotebook) are provided to demonstrate how to use the code. All the necessary data for the demos are in the folder Demo_Data.
+Open [Demo_JupyterNotebook](Demo_JupyterNotebook), select a notebook, and follow its instructions. Example data are provided in [Demo_Data](Demo_Data).
 
-* Demo1_Drone_Videos.ipynb : a demo to show how to process video data from drone.
-* Demo2_Smartphone_Photos.ipynb : a demo to show how to process photos from smartphones.
-* Demo3_Smartphone_Videos.ipynb : a demo to show how to process video data from smartphones.
-* Demo4_Smartphone_PhotosAndVideos.ipynb : a demo to show how to process both photos and videos from smartphone.
-* Demo5_FieldValidation_BaseGrainExample : a demo to validate the AI model against BaseGrain tutorial example.
-* Demo6_FieldValidation_Mair2024SiteK1.ipynb : a demo to validate the AI model against Site K1 field data from Mair D. 2024.
+* [Demo 1: Drone Videos](Demo_JupyterNotebook/Demo1_Drone_Videos.ipynb) — Process drone videos.
+* [Demo 2: Smartphone Photos](Demo_JupyterNotebook/Demo2_Smartphone_Photos.ipynb) — Process smartphone photos.
+* [Demo 3: Smartphone Videos](Demo_JupyterNotebook/Demo3_Smartphone_Videos.ipynb) — Process smartphone videos.
+* [Demo 4: Smartphone Photos and Videos](Demo_JupyterNotebook/Demo4_Smartphone_PhotosAndVideos.ipynb) — Process both smartphone photos and videos.
+* [Demo 5: BaseGrain Validation](Demo_JupyterNotebook/Demo5_FieldValidation_BaseGrainExample.ipynb) — Validate AI predictions against the BaseGrain tutorial example.
+* [Demo 6: Mair (2024) Site K1 Validation](Demo_JupyterNotebook/Demo6_FieldValidation_Mair2024SiteK1.ipynb) — Validate AI predictions against published field measurements from Site K1.
 
-The users can follow the description in each Jupyter Notebook to run the model step by step.
+## Run the Demos with Google Colab
+
+Open a demo using the links below and run its cells in order. Each notebook includes instructions for installing packages and downloading the code and required data.
+
+* [Demo 1: Drone Videos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo1_Drone_Videos.ipynb) — Process drone videos.
+* [Demo 2: Smartphone Photos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo2_Smartphone_Photos.ipynb) — Process smartphone photos.
+* [Demo 3: Smartphone Videos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo3_Smartphone_Videos.ipynb) — Process smartphone videos.
+* [Demo 4: Smartphone Photos and Videos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo4_Smartphone_PhotosAndVideos.ipynb) — Process both smartphone photos and videos.
+* [Demo 5: BaseGrain Validation](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo5_FieldValidation_BaseGrainExample.ipynb) — Validate AI predictions against the BaseGrain tutorial example.
+* [Demo 6: Mair (2024) Site K1 Validation](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo6_FieldValidation_Mair2024SiteK1.ipynb) — Validate AI predictions against published field measurements from Site K1.
+
+## Run the Demos with Spyder
+
+Please follow the steps in [Install.md](Install.md) to install AI4GSD before running the demos.
+
+Export one of the notebooks below as a Python script (`.py`), then open it in Spyder. Run any package installation commands in your Anaconda prompt. Example data are provided in [Demo_Data](Demo_Data).
+
+* [Demo 1: Drone Videos](Demo_JupyterNotebook/Demo1_Drone_Videos.ipynb) — Process drone videos.
+* [Demo 2: Smartphone Photos](Demo_JupyterNotebook/Demo2_Smartphone_Photos.ipynb) — Process smartphone photos.
+* [Demo 3: Smartphone Videos](Demo_JupyterNotebook/Demo3_Smartphone_Videos.ipynb) — Process smartphone videos.
+* [Demo 4: Smartphone Photos and Videos](Demo_JupyterNotebook/Demo4_Smartphone_PhotosAndVideos.ipynb) — Process both smartphone photos and videos.
+* [Demo 5: BaseGrain Validation](Demo_JupyterNotebook/Demo5_FieldValidation_BaseGrainExample.ipynb) — Validate AI predictions against the BaseGrain tutorial example.
+* [Demo 6: Mair (2024) Site K1 Validation](Demo_JupyterNotebook/Demo6_FieldValidation_Mair2024SiteK1.ipynb) — Validate AI predictions against published field measurements from Site K1.
 
 ## Cite as
 
