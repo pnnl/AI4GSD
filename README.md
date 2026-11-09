@@ -21,7 +21,7 @@ Chen, Y., Bao, J., Chen, R., Li, B., Yang, Y., Renteria, L., et al. (2024). Quan
 Chen Y ; Bao J ; Chen Y ; Li B ; Yang Y ; Stegen J C ; Renteria L ; Delgado D ; Forbes B ; Goldman A E ; Simhan M ; Barnes M ; Laan M ; McKever S A ; Hou Z ; Chen X ; Scheibe T D (2023): Artificial intelligence models, photos, and data associated with the manuscript “Quantifying Streambed Grain Size, Uncertainty, and Hydrobiogeochemical Parameters Using Machine Learning Model YOLO” (v2). River Corridor and Watershed Biogeochemistry SFA, ESS-DIVE repository. Dataset. https://doi.org/10.15485/1999774
 
 ## Installation
-Please follow the steps in Install.md to install the software. 
+Please follow the steps in [Install.md](Install.md) to install the software.
 
 ## Setup system path
 For Windows and Spyder: open Spyder, then go to "Tools>PYTHONPATH manager>add path". Click the "add path (+ marker)", then add the path of the main folder to the system. The main path is a folder which includes "ReadMe.md".
