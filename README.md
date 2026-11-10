@@ -48,7 +48,7 @@ Open [Demo_Colab](Demo_Colab), select a notebook, and follow its instructions. D
 
 ### Option 3: Google Colab with data from Google share drive (For AGU26 Workshop)
 
-Open [Demo_Colab](Demo_Colab_Workshop), select a notebook, and follow its instructions. Data are provided in [Demo_Data](Demo_Data).
+Open [Demo_Colab_Workshop](Demo_Colab_Workshop), select a notebook, and follow its instructions. Data are provided in [Demo_Data](Demo_Data).
 
 * [Demo 1: Drone Videos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab_Workshop/Demo1_Drone_Videos.ipynb) — Process drone videos.
 * [Demo 2: Smartphone Photos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab_Workshop/Demo2_Smartphone_Photos.ipynb) — Process smartphone photos.
