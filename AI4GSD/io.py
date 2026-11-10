@@ -20,7 +20,7 @@
 # limitations under the License.                                              #
 
 #%% Required package.
-import os, re, gzip, shutil, platform, tarfile, glob, math, zipfile
+import os, re, gzip, shutil, platform, tarfile, glob, math, zipfile, tempfile
 import numpy as np
 import pandas as pd
 from natsort import natsorted, natsort_keygen
@@ -330,22 +330,23 @@ def readEXIFVideo(video_path: str, zmax=-9999) -> dict:
         exif_name = "Image-ExifTool-13.34"
         exif_os = 'exiftool_linux' 
         exif_folder = os.path.join(os.path.dirname(mathm_path), "exes", exif_os, exif_name)
-        exif_path = os.path.join(exif_folder, "exiftool")
+        exif_tar = exif_folder + ".tar.gz"
         
-        # If exiftool is missing, extract it
+        # Google Drive (FUSE) mounts do not support the execute bit, so always
+        # extract and run ExifTool from a local temp directory (e.g. /tmp).
+        local_root = os.path.join(tempfile.gettempdir(), "ai4gsd_exiftool")
+        local_folder = os.path.join(local_root, exif_name)
+        exif_path = os.path.join(local_folder, "exiftool")
+        
         if not os.path.isfile(exif_path):
-            exif_tar = exif_folder + ".tar.gz"
             if not os.path.isfile(exif_tar):
                 raise FileNotFoundError(f"ExifTool archive not found: {exif_tar}")
-    
-            # Make sure the folder exists
-            os.makedirs(exif_folder, exist_ok=True)
-    
-            # Extract into parent (so it creates exif_folder)
+            os.makedirs(local_root, exist_ok=True)
             with tarfile.open(exif_tar, "r:gz") as tar:
-                tar.extractall(path=os.path.dirname(exif_folder))
-    
-            # Make sure the binary is executable
+                tar.extractall(path=local_root)
+        
+        # Make sure the script is executable (works on local disk).
+        if not os.access(exif_path, os.X_OK):
             os.chmod(exif_path, os.stat(exif_path).st_mode | 0o111)
 
     info = {'Width': zmax, 'Height': zmax, 'Orientation': 1, 'FrameRate': zmax, \
