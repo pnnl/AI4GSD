@@ -32,8 +32,8 @@ Open [Demo_JupyterNotebook](Demo_JupyterNotebook), select a notebook, and follow
 * [Demo 2: Smartphone Photos](Demo_JupyterNotebook/Demo2_Smartphone_Photos.ipynb) — Process smartphone photos.
 * [Demo 3: Smartphone Videos](Demo_JupyterNotebook/Demo3_Smartphone_Videos.ipynb) — Process smartphone videos.
 * [Demo 4: Smartphone Photos and Videos](Demo_JupyterNotebook/Demo4_Smartphone_PhotosAndVideos.ipynb) — Process both smartphone photos and videos.
-* [Demo 5: BaseGrain Validation](Demo_JupyterNotebook/Demo5_FieldValidation_BaseGrainExample.ipynb) — Validate AI predictions against the BaseGrain tutorial example.
-* [Demo 6: Mair2024 Site K1 Validation](Demo_JupyterNotebook/Demo6_FieldValidation_Mair2024SiteK1.ipynb) — Validate AI predictions against published field measurements from Site K1.
+* [Demo 5: BaseGrain Validation](Demo_JupyterNotebook/Demo5_FieldValidate_BaseGrain.ipynb) — Validate AI predictions against the BaseGrain tutorial example.
+* [Demo 6: Mair2024 Site K1 Validation](Demo_JupyterNotebook/Demo6_FieldValidate_Mair2024SiteK1.ipynb) — Validate AI predictions against published field measurements from Site K1.
 
 ### Option 2: Google Colab
 
