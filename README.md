@@ -43,20 +43,20 @@ Open [Demo_Colab](Demo_Colab), select a notebook, and follow its instructions. D
 * [Demo 2: Smartphone Photos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo2_Smartphone_Photos.ipynb) — Process smartphone photos.
 * [Demo 3: Smartphone Videos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo3_Smartphone_Videos.ipynb) — Process smartphone videos.
 * [Demo 4: Smartphone Photos and Videos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo4_Smartphone_PhotosAndVideos.ipynb) — Process both smartphone photos and videos.
-* [Demo 5: BaseGrain Validation](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo5_FieldValidation_BaseGrainExample.ipynb) — Validate AI predictions against the BaseGrain tutorial example.
-* [Demo 6: Mair2024 Site K1 Validation](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo6_FieldValidation_Mair2024SiteK1.ipynb) — Validate AI predictions against published field measurements from Site K1.
+* [Demo 5: BaseGrain Validation](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo5_FieldValidate_BaseGrain.ipynb) — Validate AI predictions against the BaseGrain tutorial example.
+* [Demo 6: Mair2024 Site K1 Validation](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo6_FieldValidate_Mair2024SiteK1.ipynb) — Validate AI predictions against published field measurements from Site K1.
 
 ### Option 3: Spyder
 
 Follow the steps in [Install.md](Install.md) to install AI4GSD before running the demos.
 Open one of the Python script (`.py`) in Spyder to test it. Data are provided in [Demo_Data](Demo_Data).
 
-* [Demo 1: Drone Videos](Demo_JupyterNotebook/Demo1_Drone_Videos.ipynb) — Process drone videos.
-* [Demo 2: Smartphone Photos](Demo_JupyterNotebook/Demo2_Smartphone_Photos.ipynb) — Process smartphone photos.
-* [Demo 3: Smartphone Videos](Demo_JupyterNotebook/Demo3_Smartphone_Videos.ipynb) — Process smartphone videos.
-* [Demo 4: Smartphone Photos and Videos](Demo_JupyterNotebook/Demo4_Smartphone_PhotosAndVideos.ipynb) — Process both smartphone photos and videos.
-* [Demo 5: BaseGrain Validation](Demo_JupyterNotebook/Demo5_FieldValidation_BaseGrainExample.ipynb) — Validate AI predictions against the BaseGrain tutorial example.
-* [Demo 6: Mair (2024) Site K1 Validation](Demo_JupyterNotebook/Demo6_FieldValidation_Mair2024SiteK1.ipynb) — Validate AI predictions against published field measurements from Site K1.
+* [Demo 1: Drone Videos](Demo_JupyterNotebook/Demo1_Drone_Videos.py) — Process drone videos.
+* [Demo 2: Smartphone Photos](Demo_JupyterNotebook/Demo2_Smartphone_Photos.py) — Process smartphone photos.
+* [Demo 3: Smartphone Videos](Demo_JupyterNotebook/Demo3_Smartphone_Videos.py) — Process smartphone videos.
+* [Demo 4: Smartphone Photos and Videos](Demo_JupyterNotebook/Demo4_Smartphone_PhotosAndVideos.py) — Process both smartphone photos and videos.
+* [Demo 5: BaseGrain Validation](Demo_JupyterNotebook/Demo5_FieldValidate_BaseGrain.py) — Validate AI predictions against the BaseGrain tutorial example.
+* [Demo 6: Mair (2024) Site K1 Validation](Demo_JupyterNotebook/Demo6_FieldValidate_Mair2024SiteK1.py) — Validate AI predictions against published field measurements from Site K1.
 
 ## Cite as
 
