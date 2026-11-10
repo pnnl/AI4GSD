@@ -20,7 +20,7 @@
 # limitations under the License.                                              #
 
 #%% Required package.
-import os, time, platform, socket, psutil, subprocess
+import os, time, platform, socket, psutil, subprocess, torch
 
 #%% Print computer info.
 def pcinfo():
@@ -104,7 +104,28 @@ def pcinfo():
             print("CPU frequency: unavailable")
     except (OSError, NotImplementedError, RuntimeError):
         print("CPU frequency: unavailable")
-        
+
+    try:
+        print(f"PyTorch version: {torch.__version__}")
+        cuda_available = torch.cuda.is_available()
+        print(f"CUDA available: {cuda_available}")
+
+        if cuda_available:
+            print(f"PyTorch CUDA version: {torch.version.cuda}")
+            for i in range(torch.cuda.device_count()):
+                gpu = torch.cuda.get_device_properties(i)
+                print(f"GPU {i}: {gpu.name}")
+                print(
+                    f"GPU {i} total memory: "
+                    f"{gpu.total_memory / 1024**3:.2f} GiB"
+                )
+        else:
+            print("CUDA GPU unavailable to PyTorch")
+    except ImportError:
+        print("GPU information unavailable: PyTorch is not installed")
+    except RuntimeError as error:
+        print(f"GPU information unavailable: {error}")
+              
 #%% Get folder and file names from a given path.
 def dirlists(path):
     folders = []
