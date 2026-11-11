@@ -25,7 +25,7 @@ Chen Y ; Bao J ; Chen Y ; Li B ; Yang Y ; Stegen J C ; Renteria L ; Delgado D ; 
 
 ### Option 1: Google Colab
 
-Please open [Demo_Colab](Demo_Colab) or select one link below to start the demo. Data are provided in [Demo_Data](Demo_Data) and will be downloaded to Google drive to support Colab.
+Please open [Demo_Colab](Demo_Colab) or select one link below to start the demo:
 
 * [Demo 1: Drone Videos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo1_Drone_Videos.ipynb) — Process drone videos.
 * [Demo 2: Smartphone Photos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo2_Smartphone_Photos.ipynb) — Process smartphone photos.
@@ -36,7 +36,9 @@ Please open [Demo_Colab](Demo_Colab) or select one link below to start the demo.
 
 ### Option 2: Google Colab for AGU26 Workshop
 
-These demos support Part 1, Module 1: Sediment Grain Size Mapping from Video, in the AGU 2026 workshop [SCIWS02 - AI-Enabled Multiscale Environmental Science: From Smartphone Videos to Satellite-Derived Predictions to Geospatial Foundation Models](https://studio.m-anage.com/agu/agu26/meetingapp.cgi/Session/280975). Please open [Demo_Colab](Demo_Colab) or select one link below to start the demo. Data are provided in [Demo_Data](Demo_Data) and will be downloaded to Google drive to support Colab.
+These demos support Part 1, Module 1: Sediment Grain Size Mapping from Video, in the AGU 2026 workshop [SCIWS02 - AI-Enabled Multiscale Environmental Science: From Smartphone Videos to Satellite-Derived Predictions to Geospatial Foundation Models](https://studio.m-anage.com/agu/agu26/meetingapp.cgi/Session/280975). 
+
+Please open [Demo_Colab](Demo_Colab) or select one link below to start the demo:
 
 * [Demo 1: Drone Videos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo1_Drone_Videos.ipynb) — Process drone videos.
 * [Demo 2: Smartphone Photos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo2_Smartphone_Photos.ipynb) — Process smartphone photos.
@@ -47,9 +49,9 @@ These demos support Part 1, Module 1: Sediment Grain Size Mapping from Video, in
 
 ### Option 3: Local Jupyter Notebook
 
-Follow the steps in [Install.md](Install.md) to install AI4GSD before running the demos.
+Please follow the steps in [Install.md](Install.md) to install AI4GSD before running the demos.
 
-Open [Demo_JupyterNotebook](Demo_JupyterNotebook), select a notebook, and follow its instructions. Data are provided in [Demo_Data](Demo_Data).
+Once installation is completed, download the whole folder
 
 * [Demo 1: Drone Videos](Demo_JupyterNotebook/Demo1_Drone_Videos.ipynb) — Process drone videos.
 * [Demo 2: Smartphone Photos](Demo_JupyterNotebook/Demo2_Smartphone_Photos.ipynb) — Process smartphone photos.
