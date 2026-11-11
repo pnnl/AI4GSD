@@ -25,7 +25,7 @@ Chen Y ; Bao J ; Chen Y ; Li B ; Yang Y ; Stegen J C ; Renteria L ; Delgado D ; 
 
 ### Option 1: Google Colab
 
-Please open [Demo_Colab](Demo_Colab) or select one link below to start the demo:
+Please open [Demo_Colab](Demo_Colab) or select one of the links below to start a demo. Once the notebook opens, click **Copy to Drive** below the **Help** menu to save a copy to your Google Drive. By default, the copy is saved in **My Drive → Colab Notebooks**.
 
 * [Demo 1: Drone Videos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo1_Drone_Videos.ipynb) — Process drone videos.
 * [Demo 2: Smartphone Photos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo2_Smartphone_Photos.ipynb) — Process smartphone photos.
@@ -36,8 +36,9 @@ Please open [Demo_Colab](Demo_Colab) or select one link below to start the demo:
 
 ### Option 2: Google Colab for AGU26 Workshop
 
-These demos support Part 1, Module 1: Sediment Grain Size Mapping from Video, in the AGU 2026 workshop [SCIWS02 - AI-Enabled Multiscale Environmental Science: From Smartphone Videos to Satellite-Derived Predictions to Geospatial Foundation Models](https://studio.m-anage.com/agu/agu26/meetingapp.cgi/Session/280975). Please open [Demo_Colab](Demo_Colab) or select one link below to start the demo:
+These demos support Part 1, Module 1: Sediment Grain Size Mapping from Video, in the AGU 2026 workshop [SCIWS02 – AI-Enabled Multiscale Environmental Science: From Smartphone Videos to Satellite-Derived Predictions to Geospatial Foundation Models](https://studio.m-anage.com/agu/agu26/meetingapp.cgi/Session/280975).
 
+Open [Demo_Colab](Demo_Colab) or select one of the links below to start a demo. Once the notebook opens, click **Copy to Drive** below the **Help** menu to save a copy to your Google Drive. By default, the copy is saved in **My Drive → Colab Notebooks**.
 * [Demo 1: Drone Videos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo1_Drone_Videos.ipynb) — Process drone videos.
 * [Demo 2: Smartphone Photos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo2_Smartphone_Photos.ipynb) — Process smartphone photos.
 * [Demo 3: Smartphone Videos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo3_Smartphone_Videos.ipynb) — Process smartphone videos.
