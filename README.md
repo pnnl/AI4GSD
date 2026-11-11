@@ -1,18 +1,19 @@
 # AI4GSD
-An end-to-end vision AI toolkit to map sediment grain size distribution from drone and smartphone photos and videos.
+An end-to-end vision AI toolkit for mapping sediment grain-size distributions from drone and smartphone photos and videos.
 
 ## Introduction
-AI4GSD is a computer-vision tool for automated grain-size mapping from drone- and smartphone-acquired videos and photographs. For each image, it uses three artificial intelligence (AI) models—Scale AI, Anthro AI, and Grain AI—to detect reference scales, anthropogenic objects, and individual grains, respectively. User-provided reference-scale dimensions are used to convert the detected scale pixels to pixel size (mm/pixel). Anthropogenic-object regions are excluded from the grain analysis, and the pixel sizes of individual grains are converted to physical sizes using the pixel size.
+AI4GSD automates sediment grain-size mapping from drone and smartphone videos and photos. For each image, three artificial intelligence (AI) models—Scale AI, Anthro AI, and Grain AI—detect reference scales, anthropogenic objects, and individual grains, respectively. Scale AI combines detected reference scales with user-provided dimensions to estimate pixel size (mm/pixel). Anthro AI identifies anthropogenic objects for exclusion from grain analysis, and Grain AI measures individual grains in pixels, which are converted to physical dimensions using the estimated pixel size.
 
-AI4GSD has been evaluated on both drone and smartphone imagery. Across camera types, pixel-size estimates achieved a Nash–Sutcliffe efficiency (NSE) of 0.999, a mean percent error (MPE) of −0.05%, and a mean absolute percent error (MAPE) of 0.65%. For median grain size, the corresponding values were 0.984, 0.77%, and 3.50%. For drone images, median grain-size estimates achieved an NSE of 0.995, an MPE of 1.26%, and a MAPE of 2.85%; for smartphone images, the corresponding values were 0.979, 0.34%, and 4.09%. The tool was also tested against a BaseGrain tutorial example and field-observation data reported in the literature, with reported errors of −7.59% and 1.17%, respectively.
+AI4GSD has been evaluated on both drone and smartphone imagery. Across camera types, pixel-size estimates achieved a Nash–Sutcliffe efficiency (NSE) of 0.999, a mean percent error (MPE) of −0.05%, and a mean absolute percent error (MAPE) of 0.65%. For median grain size (D50), the corresponding values were 0.984, 0.77%, and 3.50%. For drone images, D50 estimates achieved an NSE of 0.995, an MPE of 1.26%, and a MAPE of 2.85%; for smartphone images, the corresponding values were 0.979, 0.34%, and 4.09%. Comparisons with a BaseGrain tutorial example and published field observations yielded reported errors of −7.59% and 1.17%, respectively.
 
-Each image typically yields hundreds to thousands of grain measurements. These measurements are used to generate grain-size distributions by grain count or area weighting, from which characteristic grain sizes are calculated, including D10, D50, D60, and D84. AI4GSD exports the resulting statistics in standard formats and provides an overlay of the predicted reference scales, anthropogenic objects, and individual grains on each original image for user review. With figure generation disabled, the average processing time is approximately 2 seconds per frame. Users can explore the tool’s functions through the accompanying Jupyter Notebook examples.
+Each image typically provides hundreds to thousands of grain measurements. AI4GSD uses these measurements to generate grain-size distributions based on grain count or area weighting and calculate characteristic grain sizes, including D10, D50, D60, and D84. It exports the resulting statistics in standard formats and overlays the predicted reference scales, anthropogenic objects, and grains on the original images for review. With figure generation disabled, average processing time is approximately 2 seconds per frame. The accompanying demos illustrate the tool’s functions in Google Colab, Jupyter Notebook, and Python scripts.
 
 ## Funding
-The work is supported by PNNL’s River Corridor Hydrobiogeochemistry Science Focus Area project (https://www.pnnl.gov/projects/river-corridor) funded by US DOE Biological and Environmental Research (BER)
+This work is supported by PNNL’s River Corridor Hydrobiogeochemistry Science Focus Area project (https://www.pnnl.gov/projects/river-corridor), funded by the U.S. Department of Energy’s Biological and Environmental Research (BER) program.
 
-## Reference
-Details of the data and model can be found in:
+## References
+
+Details of the models and associated datasets are available in the following publications and data releases:
 
 Chen Y ; Renteria L ; Chen R ; Li B ; Forbes B ; Goldman A E (2025): Videos, photos, and AI-derived grain size data associated with “Modular AI and video surveys transform multiscale sediment grain size mapping”. River Corridor Hydro-biogeochemistry from Molecular to Multi-Basin Scales SFA, ESS-DIVE repository. Dataset. https://doi.org/10.15485/2588483 
 
@@ -20,7 +21,7 @@ Chen, Y., Bao, J., Chen, R., Li, B., Yang, Y., Renteria, L., et al. (2024). Quan
 
 Chen Y ; Bao J ; Chen Y ; Li B ; Yang Y ; Stegen J C ; Renteria L ; Delgado D ; Forbes B ; Goldman A E ; Simhan M ; Barnes M ; Laan M ; McKever S A ; Hou Z ; Chen X ; Scheibe T D (2023): Artificial intelligence models, photos, and data associated with the manuscript “Quantifying Streambed Grain Size, Uncertainty, and Hydrobiogeochemical Parameters Using Machine Learning Model YOLO” (v2). River Corridor and Watershed Biogeochemistry SFA, ESS-DIVE repository. Dataset. https://doi.org/10.15485/1999774
 
-## Run the Code
+## Run AI4GSD
 
 ### Option 1: Google Colab with data from GitHub
 
@@ -33,8 +34,17 @@ Open [Demo_Colab](Demo_Colab), select a notebook, and follow its instructions. D
 * [Demo 5: BaseGrain Validation](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo5_FieldValidate_BaseGrain.ipynb) — Validate AI predictions against the BaseGrain tutorial example.
 * [Demo 6: Mair2024 Site K1 Validation](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo6_FieldValidate_Mair2024SiteK1.ipynb) — Validate AI predictions against published field measurements from Site K1.
 
-### Option 2: Google Colab with data from Google share drive (For AGU26 Workshop)
-This demo is designed for AGU 2026 Workshop [SCIWS02 - AI-Enabled Multiscale Environmental Science: From Smartphone Videos to Satellite-Derived Predictions to Geospatial Foundation Models](https://studio.m-anage.com/agu/agu26/meetingapp.cgi/Session/280975) Part 1 Module 1: Sediment Grain Size Mapping from Video. Participants are encouraged to open the materials from shared Google Drive link: [Part 1, Module 1: Sediment Grain Size Mapping from Video](https://drive.google.com/drive/folders/1tWUBcUGXld9kB7ZyYoTCOYrR5vORmG83?usp=drive_link). When opened it, add shortcut of folder "AI4GSD" to "My Drive" through: right click "AI4GSD" > Organize > Add shortcuts > All locations > My Drive > Add. Then the Demo data to be used will be mounted to /contents/drive/MyDrive/AI4GSD, from which data will loaded to avoid downloading data from GitHub. If mount is usccessful, data will be downloaded from GitHub through the following notebooks.
+### Option 2: Google Colab with shared Google Drive data (AGU26 Workshop)
+
+These demos support Part 1, Module 1: Sediment Grain Size Mapping from Video, in the AGU 2026 workshop [SCIWS02 - AI-Enabled Multiscale Environmental Science: From Smartphone Videos to Satellite-Derived Predictions to Geospatial Foundation Models](https://studio.m-anage.com/agu/agu26/meetingapp.cgi/Session/280975).
+
+To access the shared workshop data:
+
+1. Open the shared Google Drive folder: [Part 1, Module 1: Sediment Grain Size Mapping from Video](https://drive.google.com/drive/folders/1tWUBcUGXld9kB7ZyYoTCOYrR5vORmG83?usp=drive_link).
+2. Right-click the **AI4GSD** folder and select **Organize → Add shortcut → All locations → My Drive → Add**.
+3. Open one of the notebooks below and follow its instructions to mount Google Drive.
+
+After mounting, the shared folder should be accessible at `/content/drive/MyDrive/AI4GSD`. The notebooks can load data from this location to avoid downloading them from GitHub. If mounting fails or the shared data are unavailable, use the GitHub download option in the notebooks.
 
 Open [Demo_Colab](Demo_Colab), select a notebook, and follow its instructions. Data are provided in [Demo_Data](Demo_Data).
 
@@ -45,7 +55,7 @@ Open [Demo_Colab](Demo_Colab), select a notebook, and follow its instructions. D
 * [Demo 5: BaseGrain Validation](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo5_FieldValidate_BaseGrain.ipynb) — Validate AI predictions against the BaseGrain tutorial example.
 * [Demo 6: Mair2024 Site K1 Validation](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo6_FieldValidate_Mair2024SiteK1.ipynb) — Validate AI predictions against published field measurements from Site K1.
 
-### Option 3: Jupyter Notebook
+### Option 3: Local Jupyter Notebook
 
 Follow the steps in [Install.md](Install.md) to install AI4GSD before running the demos.
 
@@ -58,10 +68,11 @@ Open [Demo_JupyterNotebook](Demo_JupyterNotebook), select a notebook, and follow
 * [Demo 5: BaseGrain Validation](Demo_JupyterNotebook/Demo5_FieldValidate_BaseGrain.ipynb) — Validate AI predictions against the BaseGrain tutorial example.
 * [Demo 6: Mair2024 Site K1 Validation](Demo_JupyterNotebook/Demo6_FieldValidate_Mair2024SiteK1.ipynb) — Validate AI predictions against published field measurements from Site K1.
 
-### Option 4: Spyder
+### Option 4: Python scripts in Spyder
 
 Follow the steps in [Install.md](Install.md) to install AI4GSD before running the demos.
-Open one of the Python script (`.py`) in Spyder to test it. Data are provided in [Demo_Data](Demo_Data).
+
+Open one of the Python scripts (`.py`) below in Spyder and follow its instructions. Data are provided in [Demo_Data](Demo_Data).
 
 * [Demo 1: Drone Videos](Demo_Python_Release/Demo1_Drone_Videos.py) — Process drone videos.
 * [Demo 2: Smartphone Photos](Demo_Python_Release/Demo2_Smartphone_Photos.py) — Process smartphone photos.
@@ -70,8 +81,9 @@ Open one of the Python script (`.py`) in Spyder to test it. Data are provided in
 * [Demo 5: BaseGrain Validation](Demo_Python_Release/Demo5_FieldValidate_BaseGrain.py) — Validate AI predictions against the BaseGrain tutorial example.
 * [Demo 6: Mair2024 Site K1 Validation](Demo_Python_Release/Demo6_FieldValidate_Mair2024SiteK1.py) — Validate AI predictions against published field measurements from Site K1.
 
-## Cite as
+## Citation
 
+```bibtex
 @misc{Chen2025,
 address = {Richland, WA, USA},
 author = {Chen, Yunxiang},
@@ -79,16 +91,17 @@ title = {{AI4GSD: an end-to-end vision AI toolkit to map sediment grain size dis
 url = {https://github.com/pnnl/AI4GSD },
 year = {2025}
 }
+```
 
-## Developers
+## Developer
 Dr. Yunxiang Chen (yunxiang.chen@pnnl.gov), Pacific Northwest National Laboratory, Richland, WA, USA 
 
 ## License
-This code applies dual licensing:
+The project uses the following licenses:
 
-* All *.py files within in ./AI4GSD folder:  Apache 2.0 license, see details in ./Licenses
-* All *.csv files within in ./AIGSD/templates: Apache 2.0 license, see details in ./Licenses
-* All *.pt files within in ./AIGSD/templates: Apache 2.0 license, see details in ./Licenses
-* All *.csv files within in ./Scales: Apache 2.0 license, see details in ./Licenses
-* All files in ./Demo_Data and ./Demo_JypyterNotebook: BSD license, see details in ./Licenses
-* Files in ffmpeg, exiftool_linux, exiftool_windows in ./AI4GSD/exes are open-source software, following their own license.
+* All `*.py` files in `./AI4GSD`: Apache 2.0; see `./Licenses`.
+* All `*.csv` files in `./AIGSD/templates`: Apache 2.0; see `./Licenses`.
+* All `*.pt` files in `./AIGSD/templates`: Apache 2.0; see `./Licenses`.
+* All `*.csv` files in `./Scales`: Apache 2.0; see `./Licenses`.
+* All files in `./Demo_Data` and `./Demo_JypyterNotebook`: BSD; see `./Licenses`.
+* The bundled software in `ffmpeg`, `exiftool_linux`, and `exiftool_windows` under `./AI4GSD/exes` is distributed under its respective licenses.
