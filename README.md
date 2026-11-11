@@ -23,9 +23,9 @@ Chen Y ; Bao J ; Chen Y ; Li B ; Yang Y ; Stegen J C ; Renteria L ; Delgado D ; 
 
 ## Run AI4GSD
 
-### Option 1: Google Colab with data from GitHub
+### Option 1: Google Colab
 
-Open [Demo_Colab](Demo_Colab), select a notebook, and follow its instructions. Data are provided in [Demo_Data](Demo_Data).
+Please open [Demo_Colab](Demo_Colab) or select one link below to start the demo. Data are provided in [Demo_Data](Demo_Data) and will be downloaded to Google drive to support Colab.
 
 * [Demo 1: Drone Videos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo1_Drone_Videos.ipynb) — Process drone videos.
 * [Demo 2: Smartphone Photos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo2_Smartphone_Photos.ipynb) — Process smartphone photos.
@@ -34,19 +34,9 @@ Open [Demo_Colab](Demo_Colab), select a notebook, and follow its instructions. D
 * [Demo 5: BaseGrain Validation](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo5_FieldValidate_BaseGrain.ipynb) — Validate AI predictions against the BaseGrain tutorial example.
 * [Demo 6: Mair2024 Site K1 Validation](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo6_FieldValidate_Mair2024SiteK1.ipynb) — Validate AI predictions against published field measurements from Site K1.
 
-### Option 2: Google Colab with shared Google Drive data (AGU26 Workshop)
+### Option 2: Google Colab for AGU26 Workshop
 
-These demos support Part 1, Module 1: Sediment Grain Size Mapping from Video, in the AGU 2026 workshop [SCIWS02 - AI-Enabled Multiscale Environmental Science: From Smartphone Videos to Satellite-Derived Predictions to Geospatial Foundation Models](https://studio.m-anage.com/agu/agu26/meetingapp.cgi/Session/280975).
-
-To access the shared workshop data:
-
-1. Open the shared Google Drive folder: [Part 1, Module 1: Sediment Grain Size Mapping from Video](https://drive.google.com/drive/folders/1tWUBcUGXld9kB7ZyYoTCOYrR5vORmG83?usp=drive_link).
-2. Right-click the **AI4GSD** folder and select **Organize → Add shortcut → All locations → My Drive → Add**.
-3. Open one of the notebooks below and follow its instructions to mount Google Drive.
-
-After mounting, the shared folder should be accessible at `/content/drive/MyDrive/AI4GSD`. The notebooks can load data from this location to avoid downloading them from GitHub. If mounting fails or the shared data are unavailable, use the GitHub download option in the notebooks.
-
-Open [Demo_Colab](Demo_Colab), select a notebook, and follow its instructions. Data are provided in [Demo_Data](Demo_Data).
+These demos support Part 1, Module 1: Sediment Grain Size Mapping from Video, in the AGU 2026 workshop [SCIWS02 - AI-Enabled Multiscale Environmental Science: From Smartphone Videos to Satellite-Derived Predictions to Geospatial Foundation Models](https://studio.m-anage.com/agu/agu26/meetingapp.cgi/Session/280975). Please open [Demo_Colab](Demo_Colab) or select one link below to start the demo. Data are provided in [Demo_Data](Demo_Data) and will be downloaded to Google drive to support Colab.
 
 * [Demo 1: Drone Videos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo1_Drone_Videos.ipynb) — Process drone videos.
 * [Demo 2: Smartphone Photos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo2_Smartphone_Photos.ipynb) — Process smartphone photos.
