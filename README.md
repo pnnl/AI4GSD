@@ -35,7 +35,7 @@ Open [Demo_JupyterNotebook](Demo_JupyterNotebook), select a notebook, and follow
 * [Demo 5: BaseGrain Validation](Demo_JupyterNotebook/Demo5_FieldValidate_BaseGrain.ipynb) — Validate AI predictions against the BaseGrain tutorial example.
 * [Demo 6: Mair2024 Site K1 Validation](Demo_JupyterNotebook/Demo6_FieldValidate_Mair2024SiteK1.ipynb) — Validate AI predictions against published field measurements from Site K1.
 
-### Option 2: Google Colab
+### Option 2: Google Colab with data from GitHub
 
 Open [Demo_Colab](Demo_Colab), select a notebook, and follow its instructions. Data are provided in [Demo_Data](Demo_Data).
 
@@ -43,20 +43,32 @@ Open [Demo_Colab](Demo_Colab), select a notebook, and follow its instructions. D
 * [Demo 2: Smartphone Photos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo2_Smartphone_Photos.ipynb) — Process smartphone photos.
 * [Demo 3: Smartphone Videos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo3_Smartphone_Videos.ipynb) — Process smartphone videos.
 * [Demo 4: Smartphone Photos and Videos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo4_Smartphone_PhotosAndVideos.ipynb) — Process both smartphone photos and videos.
-* [Demo 5: BaseGrain Validation](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo5_FieldValidation_BaseGrainExample.ipynb) — Validate AI predictions against the BaseGrain tutorial example.
-* [Demo 6: Mair2024 Site K1 Validation](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo6_FieldValidation_Mair2024SiteK1.ipynb) — Validate AI predictions against published field measurements from Site K1.
+* [Demo 5: BaseGrain Validation](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo5_FieldValidate_BaseGrain.ipynb) — Validate AI predictions against the BaseGrain tutorial example.
+* [Demo 6: Mair2024 Site K1 Validation](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo6_FieldValidate_Mair2024SiteK1.ipynb) — Validate AI predictions against published field measurements from Site K1.
 
-### Option 3: Spyder
+### Option 3: Google Colab with data from Google share drive (For AGU26 Workshop)
+This demo is designed for AGU 2026 Workshop [SCIWS02 - AI-Enabled Multiscale Environmental Science: From Smartphone Videos to Satellite-Derived Predictions to Geospatial Foundation Models](https://studio.m-anage.com/agu/agu26/meetingapp.cgi/Session/280975) Part 1 Module 1: Sediment Grain Size Mapping from Video. Participants are encouraged to open the materials from shared Google Drive link: [Part 1, Module 1: Sediment Grain Size Mapping from Video](https://drive.google.com/drive/folders/1tWUBcUGXld9kB7ZyYoTCOYrR5vORmG83?usp=drive_link). When opened it, add shortcut of folder "AI4GSD" to "My Drive" through: right click "AI4GSD" > Organize > Add shortcuts > All locations > My Drive > Add. Then the Demo data to be used will be mounted to /contents/drive/MyDrive/AI4GSD, from which data will loaded to avoid downloading data from GitHub. If mount is usccessful, data will be downloaded from GitHub through the following notebooks.
+
+Open [Demo_Colab_Workshop](Demo_Colab_Workshop), select a notebook, and follow its instructions. Data are provided in [Demo_Data](Demo_Data).
+
+* [Demo 1: Drone Videos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab_Workshop/Demo1_Drone_Videos.ipynb) — Process drone videos.
+* [Demo 2: Smartphone Photos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab_Workshop/Demo2_Smartphone_Photos.ipynb) — Process smartphone photos.
+* [Demo 3: Smartphone Videos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab_Workshop/Demo3_Smartphone_Videos.ipynb) — Process smartphone videos.
+* [Demo 4: Smartphone Photos and Videos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab_Workshop/Demo4_Smartphone_PhotosAndVideos.ipynb) — Process both smartphone photos and videos.
+* [Demo 5: BaseGrain Validation](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab_Workshop/Demo5_FieldValidate_BaseGrain.ipynb) — Validate AI predictions against the BaseGrain tutorial example.
+* [Demo 6: Mair2024 Site K1 Validation](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab_Workshop/Demo6_FieldValidate_Mair2024SiteK1.ipynb) — Validate AI predictions against published field measurements from Site K1.
+
+### Option 4: Spyder
 
 Follow the steps in [Install.md](Install.md) to install AI4GSD before running the demos.
 Open one of the Python script (`.py`) in Spyder to test it. Data are provided in [Demo_Data](Demo_Data).
 
-* [Demo 1: Drone Videos](Demo_JupyterNotebook/Demo1_Drone_Videos.ipynb) — Process drone videos.
-* [Demo 2: Smartphone Photos](Demo_JupyterNotebook/Demo2_Smartphone_Photos.ipynb) — Process smartphone photos.
-* [Demo 3: Smartphone Videos](Demo_JupyterNotebook/Demo3_Smartphone_Videos.ipynb) — Process smartphone videos.
-* [Demo 4: Smartphone Photos and Videos](Demo_JupyterNotebook/Demo4_Smartphone_PhotosAndVideos.ipynb) — Process both smartphone photos and videos.
-* [Demo 5: BaseGrain Validation](Demo_JupyterNotebook/Demo5_FieldValidation_BaseGrainExample.ipynb) — Validate AI predictions against the BaseGrain tutorial example.
-* [Demo 6: Mair (2024) Site K1 Validation](Demo_JupyterNotebook/Demo6_FieldValidation_Mair2024SiteK1.ipynb) — Validate AI predictions against published field measurements from Site K1.
+* [Demo 1: Drone Videos](Demo_Python_Release/Demo1_Drone_Videos.py) — Process drone videos.
+* [Demo 2: Smartphone Photos](Demo_Python_Release/Demo2_Smartphone_Photos.py) — Process smartphone photos.
+* [Demo 3: Smartphone Videos](Demo_Python_Release/Demo3_Smartphone_Videos.py) — Process smartphone videos.
+* [Demo 4: Smartphone Photos and Videos](Demo_Python_Release/Demo4_Smartphone_PhotosAndVideos.py) — Process both smartphone photos and videos.
+* [Demo 5: BaseGrain Validation](Demo_Python_Release/Demo5_FieldValidate_BaseGrain.py) — Validate AI predictions against the BaseGrain tutorial example.
+* [Demo 6: Mair2024 Site K1 Validation](Demo_Python_Release/Demo6_FieldValidate_Mair2024SiteK1.py) — Validate AI predictions against published field measurements from Site K1.
 
 ## Cite as
 
