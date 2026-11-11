@@ -104,15 +104,31 @@ python -c "import numpy, pandas, cv2, matplotlib, ultralytics, torch, torchvisio
 
 For a CPU installation, `CUDA available: False` is expected.
 
-## Step 11: Launch Jupyter Notebook
+## Step 11: Download the code
 
-Navigate to the `Demo_JupyterNotebook` folder inside your AI4GSD directory. For example:
+Navigate to the green `Code` button, click it, and select "Download ZIP". Extracting the file and rename it to "AI4GSD".
+
+## Step 12: Launch Jupyter Notebook
+
+Navigate to the `Demo_JupyterNotebook` folder inside your AI4GSD directory (For example: D:\). For example:
 
 ```powershell
-cd D:\NG\AI4GSD\Demo_JupyterNotebook
+cd D:\AI4GSD\Demo_JupyterNotebook
 jupyter notebook
 ```
 
 In the browser, open a demo notebook and select **Python (ai4gsd)** as its kernel.
+
+## Step 13: Launch Spyder
+
+Find "Spyder" from Windows search or Start, and open it to launch. Then Select Open File in Spyder to open .py file from Demo_Python_Release. Please change the Python interprestr to C:/Users/[YOUR COMPUTER NAME]/AppData/Local/anaconda3/envs/ai4gsd/python.exe
+
+Navigate to the `Demo_JupyterNotebook` folder inside your AI4GSD directory (For example: D:\). For example:
+
+```powershell
+cd D:\AI4GSD\Demo_JupyterNotebook
+jupyter notebook
+```
+In the lower right corner of Spyder, you should see **conda (ai4gsd)** as its interpreter.
 
 You are now ready to run the AI4GSD demos.
