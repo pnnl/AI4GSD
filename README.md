@@ -47,9 +47,9 @@ These demos support Part 1, Module 1: Sediment Grain Size Mapping from Video, in
 
 ### Option 3: Local Jupyter Notebook
 
-Please follow the steps in [Install.md](Install.md) to install AI4GSD before running the demos.
-
-Once installation is completed, download the whole folder
+For Windows, please follow the steps in [Install_Windows.md](Install_Windows.md) to install AI4GSD before running the demos.
+For Linux,   please follow the steps in [Install_Linux.md](Install_Linux.md) to install AI4GSD before running the demos.
+For Windows, please follow the steps in [Install_macOS.md](Install_macOS.md) to install AI4GSD before running the demos.
 
 * [Demo 1: Drone Videos](Demo_JupyterNotebook/Demo1_Drone_Videos.ipynb) — Process drone videos.
 * [Demo 2: Smartphone Photos](Demo_JupyterNotebook/Demo2_Smartphone_Photos.ipynb) — Process smartphone photos.
@@ -60,9 +60,9 @@ Once installation is completed, download the whole folder
 
 ### Option 4: Python scripts in Spyder
 
-Follow the steps in [Install.md](Install.md) to install AI4GSD before running the demos.
-
-Open one of the Python scripts (`.py`) below in Spyder and follow its instructions. Data are provided in [Demo_Data](Demo_Data).
+For Windows, please follow the steps in [Install_Windows.md](Install_Windows.md) to install AI4GSD before running the demos.
+For Linux,   please follow the steps in [Install_Linux.md](Install_Linux.md) to install AI4GSD before running the demos.
+For Windows, please follow the steps in [Install_macOS.md](Install_macOS.md) to install AI4GSD before running the demos.
 
 * [Demo 1: Drone Videos](Demo_Python_Release/Demo1_Drone_Videos.py) — Process drone videos.
 * [Demo 2: Smartphone Photos](Demo_Python_Release/Demo2_Smartphone_Photos.py) — Process smartphone photos.

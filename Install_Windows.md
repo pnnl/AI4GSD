@@ -2,7 +2,6 @@
 
 Install AI4GSD, then run the demos using **Jupyter Notebook** or **Spyder**.
 
-> **Before you begin:** Run all installation commands in **Anaconda PowerShell Prompt**. Install only **one** PyTorch option in Step 6.
 
 ## Step 0 · Install Anaconda
 
