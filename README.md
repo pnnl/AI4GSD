@@ -33,6 +33,7 @@ Please open [Demo_Colab](Demo_Colab) or select one of the links below to start a
 * [Demo 4: Smartphone Photos and Videos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo4_Smartphone_PhotosAndVideos.ipynb) — Process both smartphone photos and videos.
 * [Demo 5: BaseGrain Validation](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo5_FieldValidate_BaseGrain.ipynb) — Validate AI predictions against the BaseGrain tutorial example.
 * [Demo 6: Mair2024 Site K1 Validation](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo6_FieldValidate_Mair2024SiteK1.ipynb) — Validate AI predictions against published field measurements from Site K1.
+* [Demo 7: Run on Your Own Photos and Videos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo7_Run_From_Your_Folder.ipynb) — Process your photos and videos containing scale keychains from PNNL. In **My Drive** in Google Drive, create a folder (e.g., `20261113_YC_CSF`) with two subfolders: `photos` and `videos`. Upload your photos and videos to the corresponding subfolders. Then open Demo 7 and replace the folder name in **Step 2** with your actual folder name.
 
 ### Option 2: Google Colab for AGU26 Workshop
 
@@ -45,6 +46,7 @@ Open [Demo_Colab](Demo_Colab) or select one of the links below to start a demo. 
 * [Demo 4: Smartphone Photos and Videos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo4_Smartphone_PhotosAndVideos.ipynb) — Process both smartphone photos and videos.
 * [Demo 5: BaseGrain Validation](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo5_FieldValidate_BaseGrain.ipynb) — Validate AI predictions against the BaseGrain tutorial example.
 * [Demo 6: Mair2024 Site K1 Validation](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo6_FieldValidate_Mair2024SiteK1.ipynb) — Validate AI predictions against published field measurements from Site K1.
+* [Demo 7: Run on Your Own Photos and Videos](https://colab.research.google.com/github/pnnl/AI4GSD/blob/main/Demo_Colab/Demo7_Run_From_Your_Folder.ipynb) — Process your photos and videos containing scale keychains from PNNL. In **My Drive** in Google Drive, create a folder (e.g., `20261113_YC_CSF`) with two subfolders: `photos` and `videos`. Upload your photos and videos to the corresponding subfolders. Then open Demo 7 and replace the folder name in **Step 2** with your actual folder name.
 
 ### Option 3: Local Jupyter Notebook
 
